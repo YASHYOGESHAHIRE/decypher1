@@ -33,11 +33,7 @@ logger = logging.getLogger(__name__)
 app = FastAPI(title="Amazon Product Scraper with Compliance Validation", version="T1.0.9")
 
 # Static and templates directories
-if os.path.exists("static") and os.listdir("static"):
-    app.mount("/static", StaticFiles(directory="static"), name="static")
-else:
-    logger.warning("Static directory is empty or doesn't exist. Skipping static files mounting.")
-
+app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
 # Add CORS middleware
@@ -52,12 +48,10 @@ app.add_middleware(
 # Supabase Configuration
 supabase_url = os.getenv("SUPABASE_URL")
 supabase_key = os.getenv("SUPABASE_KEY")
-if supabase_url and supabase_key:
-    supabase: Client = create_client(supabase_url, supabase_key)
-    logger.info("Supabase client initialized successfully.")
-else:
-    logger.warning("Supabase credentials not found. Database features will be disabled.")
-    supabase = None
+if not supabase_url or not supabase_key:
+    raise ValueError("SUPABASE_URL and SUPABASE_KEY must be set in your .env file.")
+supabase: Client = create_client(supabase_url, supabase_key)
+logger.info("Supabase client initialized successfully.")
 
 class ProductRequest(BaseModel):
     url: HttpUrl
@@ -70,16 +64,7 @@ class ProductResponse(BaseModel):
     message: str = ""
 
 # Initialize OCR readers and AI clients
-try:
-    import easyocr
-    easyocr_reader = easyocr.Reader(['en'], gpu=False)
-    logger.info("EasyOCR initialized successfully")
-except ImportError:
-    logger.warning("EasyOCR not installed. OCR functionality will use Mistral only.")
-    easyocr_reader = None
-except Exception as e:
-    logger.error(f"EasyOCR initialization failed: {e}")
-    easyocr_reader = None
+easyocr_reader = easyocr.Reader(['en'], gpu=False)
 
 mistral_api_key = os.getenv("MISTRAL_API_KEY")
 mistral_client = Mistral(api_key=mistral_api_key) if mistral_api_key else None
@@ -87,12 +72,9 @@ if not mistral_api_key:
     logger.warning("MISTRAL_API_KEY not found. Mistral OCR will be unavailable.")
 
 groq_api_key = os.getenv("GROQ_API_KEY")
-if groq_api_key:
-    groq_client = Groq(api_key=groq_api_key)
-    logger.info("Groq client initialized successfully")
-else:
-    logger.warning("GROQ_API_KEY not found. Compliance validation will be limited.")
-    groq_client = None
+if not groq_api_key:
+    raise ValueError("GROQ_API_KEY not found. Please add it to your .env file.")
+groq_client = Groq(api_key=groq_api_key)
 
 MIN_BBOX_THRESHOLD = 0
 COMPLIANCE_FIELDS = ["MRP", "Net Quantity", "Expiry Date", "Manufacturer", "Country of Origin"]
@@ -100,10 +82,6 @@ async def log_to_supabase(product_report: dict):
     """
     Saves the product and scan data to the Supabase database.
     """
-    if not supabase:
-        logger.warning("Supabase not initialized. Skipping database logging.")
-        return
-        
     try:
         logger.info(f"Logging report to Supabase for product: {product_report.get('product_name')}")
         
@@ -156,10 +134,6 @@ async def log_to_supabase(product_report: dict):
         logger.error(f"❌ Product data: {product_report.get('product_name')} - {product_report.get('product_link')}")
 
 def check_text_density(image_url: str) -> tuple[int, float]:
-    if not easyocr_reader:
-        logger.warning("EasyOCR not available for text density check")
-        return 1, 0.8  # Assume there's text to proceed with processing
-        
     try:
         headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0.0.0 Safari/537.36'}
         response = requests.get(image_url, headers=headers, timeout=10)
@@ -175,9 +149,6 @@ def check_text_density(image_url: str) -> tuple[int, float]:
         return 0, 0.0
 
 def extract_text_easyocr(image_url: str) -> tuple[str, float]:
-    if not easyocr_reader:
-        return "EasyOCR not available", 0.0
-        
     try:
         headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0.0.0 Safari/537.36'}
         response = requests.get(image_url, headers=headers, timeout=10)
@@ -251,17 +222,6 @@ def extract_json_from_response(response_text: str) -> Dict:
     return None
 
 def validate_compliance_with_groq(title: str, ocr_texts: List[str]) -> Dict:
-    if not groq_client:
-        logger.warning("Groq client not available. Returning default non-compliant result.")
-        return {
-            "actual_list": [],
-            "expected_list": COMPLIANCE_FIELDS,
-            "violations_count": len(COMPLIANCE_FIELDS),
-            "compliance_percent": 0.0,
-            "compliance_status": "Non-compliant",
-            "field_status": {field: "missing" for field in COMPLIANCE_FIELDS}
-        }
-        
     try:
         combined_text = f"Product Title: {title}\n\nOCR Text:\n" + "\n".join(ocr_texts)
         logger.info(f"Input text for Groq validation: {combined_text}")
@@ -508,11 +468,6 @@ async def scrape_amazon_product(url: str, ocr_method: str) -> AsyncGenerator[str
             "compliance_result": { "actual_list": [], "expected_list": COMPLIANCE_FIELDS, "violations_count": len(COMPLIANCE_FIELDS), "compliance_percent": 0.0, "compliance_status": "Non-compliant", "field_status": {field: "missing" for field in COMPLIANCE_FIELDS}}
         })
 
-@app.get("/health")
-async def health_check():
-    """Health check endpoint"""
-    return {"status": "healthy", "timestamp": datetime.now().isoformat()}
-
 @app.get("/dashboard", response_class=HTMLResponse)
 async def get_dashboard(request: Request):
     """Serves the main dashboard HTML file using templates."""
@@ -756,4 +711,4 @@ async def get_home(request: Request):
     
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
+    uvicorn.run("api.index:app", host="0.0.0.0", port=8000, reload=True)
