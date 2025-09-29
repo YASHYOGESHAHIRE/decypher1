@@ -3,33 +3,34 @@
   "name": "compliance-checker",
   "builds": [
     {
-      "src": "index.html",
+      "src": "api/index.py",
+      "use": "@vercel/python"
+    },
+    {
+      "src": "*.html",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "static/**",
       "use": "@vercel/static"
     }
   ],
   "routes": [
     {
+      "src": "/api/(.*)",
+      "dest": "api/index.py"
+    },
+    {
       "src": "/(.*)",
       "dest": "/$1"
     }
   ],
-  "functions": {
-    "index.html": {
-      "includeFiles": "**"
-    }
-  },
   "headers": [
     {
       "source": "/(.*)",
       "headers": [
-        {
-          "key": "X-Frame-Options",
-          "value": "SAMEORIGIN"
-        },
-        {
-          "key": "X-Content-Type-Options",
-          "value": "nosniff"
-        }
+        { "key": "X-Frame-Options", "value": "SAMEORIGIN" },
+        { "key": "X-Content-Type-Options", "value": "nosniff" }
       ]
     }
   ]
