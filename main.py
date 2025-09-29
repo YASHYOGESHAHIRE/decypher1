@@ -33,7 +33,11 @@ logger = logging.getLogger(__name__)
 app = FastAPI(title="Amazon Product Scraper with Compliance Validation", version="T1.0.9")
 
 # Static and templates directories
-app.mount("/static", StaticFiles(directory="static"), name="static")
+if os.path.exists("static") and os.listdir("static"):
+    app.mount("/static", StaticFiles(directory="static"), name="static")
+else:
+    logger.warning("Static directory is empty or doesn't exist. Skipping static files mounting.")
+
 templates = Jinja2Templates(directory="templates")
 
 # Add CORS middleware
@@ -500,6 +504,11 @@ async def scrape_amazon_product(url: str, ocr_method: str) -> AsyncGenerator[str
             "compliance_result": { "actual_list": [], "expected_list": COMPLIANCE_FIELDS, "violations_count": len(COMPLIANCE_FIELDS), "compliance_percent": 0.0, "compliance_status": "Non-compliant", "field_status": {field: "missing" for field in COMPLIANCE_FIELDS}}
         })
 
+@app.get("/health")
+async def health_check():
+    """Health check endpoint"""
+    return {"status": "healthy", "timestamp": datetime.now().isoformat()}
+
 @app.get("/dashboard", response_class=HTMLResponse)
 async def get_dashboard(request: Request):
     """Serves the main dashboard HTML file using templates."""
@@ -743,4 +752,4 @@ async def get_home(request: Request):
     
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("api.index:app", host="0.0.0.0", port=8000, reload=True)
+    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
