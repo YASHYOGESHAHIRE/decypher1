@@ -71,8 +71,12 @@ class ProductResponse(BaseModel):
 
 # Initialize OCR readers and AI clients
 try:
+    import easyocr
     easyocr_reader = easyocr.Reader(['en'], gpu=False)
     logger.info("EasyOCR initialized successfully")
+except ImportError:
+    logger.warning("EasyOCR not installed. OCR functionality will use Mistral only.")
+    easyocr_reader = None
 except Exception as e:
     logger.error(f"EasyOCR initialization failed: {e}")
     easyocr_reader = None
