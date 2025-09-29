@@ -9,7 +9,6 @@ from bs4 import BeautifulSoup
 import json
 import re
 from typing import List, Dict, AsyncGenerator, Optional
-import easyocr
 from PIL import Image
 import io
 import base64
@@ -63,7 +62,12 @@ class ProductResponse(BaseModel):
 
 # Initialize OCR readers and AI clients
 try:
+    import easyocr
     easyocr_reader = easyocr.Reader(['en'], gpu=False)
+    logger.info("EasyOCR initialized successfully")
+except ImportError:
+    logger.warning("EasyOCR not available in this environment")
+    easyocr_reader = None
 except Exception as e:
     logger.warning(f"EasyOCR initialization failed: {e}")
     easyocr_reader = None
