@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Legal Metrology Compliance Checker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --bg: #f7f8f9;
+            --surface: #ffffff;
+            --text: #111827;
+            --muted: #6b7280;
+            --border: #e5e7eb;
+            --brand: #2f6b3f;
+            --brand-ink: #10361f;
+            --accent: #d97706;
+            --accent-ink: #7c3e00;
+            --error: #b91c1c;
+            --ring: rgba(217,119,6,0.35);
+            --shadow: 0 10px 30px rgba(17,24,39,0.08);
+            --radius: 14px;
+            --radius-sm: 10px;
+            --radius-lg: 22px;
+            --container: 1200px;
+        }
+
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            padding: 0;
+            background: var(--bg);
+            color: var(--text);
+            font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+            line-height: 1.6;
+        }
+
+        /* Navigation */
+        .navbar {
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            background: rgba(247, 248, 249, 0.9);
+            backdrop-filter: blur(8px);
+            border-bottom: 1px solid var(--border);
+            padding: 0 20px;
+        }
+        .nav-container {
+            max-width: var(--container);
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 72px;
+        }
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 700;
+            color: var(--brand-ink);
+        }
+        .brand-badge {
+            width: 34px;
+            height: 34px;
+            border-radius: 9px;
+            display: grid;
+            place-items: center;
+            background: color-mix(in oklab, var(--brand) 18%, white 82%);
+            color: var(--brand);
+            font-weight: 800;
+        }
+        .nav-links {
+            display: flex;
+            gap: 32px;
+            align-items: center;
+        }
+        .nav-link {
+            color: var(--muted);
+            font-weight: 600;
+            text-decoration: none;
+            padding: 8px 16px;
+            border-radius: var(--radius-sm);
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+        .nav-link:hover {
+            color: var(--brand-ink);
+            background: color-mix(in oklab, var(--brand) 8%, white 92%);
+        }
+        .nav-link.active {
+            color: var(--brand-ink);
+            background: color-mix(in oklab, var(--brand) 12%, white 88%);
+        }
+
+        /* Main Content */
+        .main-content {
+            padding: 0;
+            min-height: calc(100vh - 72px);
+        }
+        .page {
+            display: none;
+        }
+        .page.active {
+            display: block;
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .nav-links {
+                display: none;
+            }
+            .main-content {
+                padding: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="brand">
+                <div class="brand-badge">🇮🇳</div>
+                <span>Legal Metrology Compliance Checker</span>
+            </div>
+            <div class="nav-links">
+                <a href="#home" class="nav-link" data-page="home">Home</a>
+                <a href="#analytics" class="nav-link" data-page="analytics">Analytics</a>
+                <a href="#scanner" class="nav-link" data-page="scanner">Scan Product</a>
+                <a href="#api" class="nav-link" data-page="api">API Docs</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Home Page -->
+        <div id="home" class="page active">
+            <iframe src="./home.html" style="width: 100%; height: calc(100vh - 72px); border: none;"></iframe>
+        </div>
+
+        <!-- Analytics Page -->
+        <div id="analytics" class="page">
+            <iframe src="./analytics.html" style="width: 100%; height: calc(100vh - 72px); border: none;"></iframe>
+        </div>
+
+        <!-- Scanner Page -->
+        <div id="scanner" class="page">
+            <iframe src="./scanner.html" style="width: 100%; height: calc(100vh - 72px); border: none;"></iframe>
+        </div>
+
+        <!-- API Docs Page -->
+        <div id="api" class="page">
+            <iframe src="./api.html" style="width: 100%; height: calc(100vh - 72px); border: none;"></iframe>
+        </div>
+    </main>
+
+    <script>
+        // Simple SPA Router
+        let currentPage = 'home';
+
+        function navigateTo(page) {
+            // Hide all pages
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+            
+            // Show target page
+            document.getElementById(page).classList.add('active');
+            document.querySelector(`[data-page="${page}"]`).classList.add('active');
+            
+            currentPage = page;
+            window.location.hash = page;
+        }
+
+        // Handle navigation clicks
+        document.querySelectorAll('.nav-link').forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const page = link.getAttribute('data-page');
+                navigateTo(page);
+            });
+        });
+
+        // Handle browser back/forward
+        window.addEventListener('hashchange', () => {
+            const page = window.location.hash.slice(1) || 'home';
+            if (page !== currentPage) {
+                navigateTo(page);
+            }
+        });
+
+        // Initialize on load
+        window.addEventListener('load', () => {
+            const page = window.location.hash.slice(1) || 'home';
+            navigateTo(page);
+        });
+    </script>
+</body>
+</html>

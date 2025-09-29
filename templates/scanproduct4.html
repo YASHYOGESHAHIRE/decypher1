@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Legal Compliance Decypher — AI Compliance Scanner</title>
+  <meta name="description" content="AI-powered tool to scrape and analyze e-commerce product listings for Legal Metrology compliance using OCR and advanced rule validation." />
+  <style>
+    /* Theme Tokens (aligned with project branding) */
+    :root {
+      --bg: #f7f8f9;             /* neutral off-white */
+      --surface: #ffffff;         /* white surface */
+      --text: #111827;            /* gray-900 */
+      --muted: #6b7280;           /* gray-500 */
+      --border: #e5e7eb;          /* gray-200 */
+      --brand: #2f6b3f;           /* evergreen primary */
+      --brand-ink: #10361f;       /* deep evergreen */
+      --accent: #d97706;          /* warm amber */
+      --accent-ink: #7c3e00;      /* deeper amber */
+      --error: #b91c1c;           /* red for errors */
+      --ring: rgba(217,119,6,0.35); /* amber ring */
+      --shadow: 0 10px 30px rgba(17,24,39,0.08);
+      --radius: 14px;
+      --radius-sm: 10px;
+      --radius-lg: 22px;
+      --container: 1200px;
+    }
+
+    /* Base Reset + Typography */
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+    a { color: var(--brand); text-decoration: none; }
+    a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible {
+      outline: 0;
+      box-shadow: 0 0 0 4px var(--ring);
+      border-radius: var(--radius-sm);
+    }
+
+    /* Layout */
+    .container { max-width: var(--container); margin: 0 auto; padding: 0 20px; }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+      height: 44px; padding: 0 16px; border-radius: var(--radius-sm); border: 1px solid transparent;
+      font-weight: 700; letter-spacing: 0.2px; cursor: pointer;
+      transition: transform 0.04s ease, background 0.25s ease, border-color 0.25s ease, color 0.25s ease;
+      will-change: transform;
+    }
+    .btn:active { transform: translateY(1px); }
+    .btn-primary { background: var(--brand); color: #fff; }
+    .btn-primary:hover { background: color-mix(in oklab, var(--brand) 92%, black 8%); }
+    .btn-secondary { background: var(--surface); color: #2b2f36; border-color: var(--border); }
+    .btn-secondary:hover { background: color-mix(in oklab, var(--surface) 90%, var(--bg) 10%); }
+    .btn-ghost { background: transparent; color: var(--brand-ink); }
+
+    /* Main Content */
+    main { padding: 32px 0; }
+    .section { margin-bottom: 32px; }
+    .section h1 {
+      font-size: clamp(24px, 4vw, 36px); margin: 0 0 16px;
+      letter-spacing: -0.01em; color: var(--brand-ink); text-align: center;
+    }
+    .section p { color: var(--muted); max-width: 60ch; margin: 0 auto 18px; text-align: center; }
+
+    /* Form and Input Styles */
+    .input-group {
+      display: grid; gap: 8px; margin-bottom: 16px;
+    }
+    .input-group label {
+      font-weight: 600; color: var(--muted); font-size: 14px;
+    }
+    .input-group input[type="text"], .input-group input[type="file"], .input-group select {
+      width: 100%; padding: 10px; border: 1px solid var(--border);
+      border-radius: var(--radius-sm); background: var(--surface);
+      font-size: 14px;
+    }
+    .input-group input[type="file"] {
+      padding: 8px;
+    }
+    .controls {
+      display: flex; gap: 12px; flex-wrap: wrap; align-items: center;
+    }
+    .status {
+      padding: 12px; border-radius: var(--radius-sm); background: var(--surface);
+      border: 1px solid var(--border); color: var(--muted); font-weight: 600;
+    }
+    .status.active {
+      background: color-mix(in oklab, var(--accent) 10%, white 90%);
+      color: var(--accent-ink); border-color: color-mix(in oklab, var(--accent) 20%, var(--border) 80%);
+    }
+    .error {
+      padding: 12px; border: 1px solid rgba(220,38,38,0.25);
+      background: rgba(220,38,38,0.05); border-radius: var(--radius-sm);
+      color: var(--error); font-weight: 600;
+    }
+
+    /* OCR Options */
+    .ocr-options {
+      display: grid; gap: 12px; grid-template-columns: 1fr;
+    }
+    @media (min-width: 760px) {
+      .ocr-options { grid-template-columns: repeat(2, 1fr); }
+    }
+    .ocr-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 16px;
+      box-shadow: var(--shadow); transition: transform 0.15s ease, box-shadow 0.25s ease;
+    }
+    .ocr-card:hover {
+      transform: translateY(-2px); box-shadow: 0 15px 40px rgba(17,24,39,0.12);
+    }
+    .ocr-card h3 {
+      margin: 0 0 8px; font-size: 18px; color: var(--brand-ink);
+    }
+    .ocr-card p {
+      margin: 0; color: var(--muted); font-size: 14px;
+    }
+
+    /* Footer */
+    footer {
+      padding: 28px 0; color: #4b5563; font-size: 14px;
+      border-top: 1px solid var(--border);
+    }
+    .footer-row {
+      display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;
+    }
+
+
+    /* Image Upload Styles */
+    .upload-area {
+      border: 2px dashed var(--border);
+      border-radius: var(--radius);
+      padding: 32px;
+      text-align: center;
+      background: var(--surface);
+      transition: border-color 0.25s ease, background 0.25s ease;
+      cursor: pointer;
+    }
+    .upload-area:hover {
+      border-color: var(--brand);
+      background: color-mix(in oklab, var(--brand) 3%, white 97%);
+    }
+    .upload-area.dragover {
+      border-color: var(--accent);
+      background: color-mix(in oklab, var(--accent) 5%, white 95%);
+    }
+    .upload-icon {
+      font-size: 48px;
+      margin-bottom: 16px;
+      opacity: 0.6;
+    }
+    .upload-text {
+      color: var(--muted);
+      margin-bottom: 16px;
+    }
+    .upload-text strong {
+      color: var(--brand-ink);
+    }
+    .file-info {
+      background: color-mix(in oklab, var(--brand) 8%, white 92%);
+      border: 1px solid color-mix(in oklab, var(--brand) 20%, var(--border) 80%);
+      border-radius: var(--radius-sm);
+      padding: 12px;
+      margin-top: 16px;
+      display: none;
+    }
+    .image-preview {
+      max-width: 200px;
+      max-height: 200px;
+      border-radius: var(--radius-sm);
+      margin: 16px auto;
+      display: none;
+      box-shadow: var(--shadow);
+    }
+    .tab-container {
+      display: flex;
+      background: var(--surface);
+      border-radius: var(--radius) var(--radius) 0 0;
+      border: 1px solid var(--border);
+      border-bottom: none;
+      overflow: hidden;
+    }
+    .tab {
+      flex: 1;
+      padding: 12px 16px;
+      background: var(--bg);
+      border: none;
+      cursor: pointer;
+      font-weight: 600;
+      color: var(--muted);
+      transition: background 0.25s ease, color 0.25s ease;
+    }
+    .tab.active {
+      background: var(--surface);
+      color: var(--brand-ink);
+    }
+    .tab-content {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 0 0 var(--radius) var(--radius);
+      padding: 24px;
+      box-shadow: var(--shadow);
+    }
+    .tab-panel {
+      display: none;
+    }
+    .tab-panel.active {
+      display: block;
+    }
+
+    /* Utilities */
+    .row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .spacer-2 { height: 8px; }
+    .spacer-4 { height: 16px; }
+  </style>
+</head>
+<body>
+  <main>
+    <section class="container section" id="scanner">
+      <div style="text-align: center; margin-bottom: 32px;">
+        <h1>Legal Metrology Compliance Scanner</h1>
+        <p style="max-width: 800px; margin: 0 auto;">
+          Validate e-commerce product listings against Legal Metrology (Packaged Commodities) Rules, 2011. Our AI-powered system extracts and analyzes mandatory declarations including MRP, net quantity, manufacturer details, and country of origin.
+        </p>
+      </div>
+  
+      <!-- Dashboard Link -->
+      <a href="/dashboard" style="display: block; margin-bottom: 20px; text-align: center;">
+        <button class="btn btn-secondary">View Full Dashboard</button>
+      </a>
+  
+      <!-- Scanner Options Tabs -->
+      <div style="max-width: 800px; margin: 0 auto 32px;">
+        <div class="tab-container">
+          <button class="tab active" onclick="switchTab('url')">🔗 URL Scanner</button>
+          <button class="tab" onclick="switchTab('image')">📷 Image Upload</button>
+        </div>
+        
+        <div class="tab-content">
+          <!-- URL Scanner Tab -->
+          <div class="tab-panel active" id="url-panel">
+            <h3 style="margin: 0 0 16px; color: var(--brand-ink); font-size: 20px;">Product URL Scanner</h3>
+            <p style="margin: 0 0 20px; color: var(--muted);">
+              Enter a product URL from major e-commerce platforms to automatically extract and validate compliance information.
+            </p>
+            
+            <div class="input-group">
+              <label for="productUrl">E-commerce Product URL</label>
+              <input type="text" id="productUrl" placeholder="https://www.amazon.in/dp/PRODUCT_ID or https://www.flipkart.com/product-name/p/..." />
+            </div>
+            
+            <div class="controls" style="justify-content: center;">
+              <button class="btn btn-primary" id="scrapeBtn" style="padding: 12px 32px;">
+                🚀 Start Compliance Scan
+              </button>
+              <div class="status" id="scrapeStatus" hidden>Scanning product...</div>
+            </div>
+          </div>
+          
+          <!-- Image Upload Tab -->
+          <div class="tab-panel" id="image-panel">
+            <h3 style="margin: 0 0 16px; color: var(--brand-ink); font-size: 20px;">Product Image Upload</h3>
+            <p style="margin: 0 0 20px; color: var(--muted);">
+              Upload product images or labels to extract and validate compliance information using OCR technology.
+            </p>
+            
+            <div class="upload-area" id="uploadArea" onclick="document.getElementById('imageInput').click()">
+              <div class="upload-icon">📷</div>
+              <div class="upload-text">
+                <strong>Click to upload</strong> or drag and drop<br>
+                <small>Supports: JPG, PNG, JPEG, WEBP (Max 10MB)</small>
+              </div>
+              <input type="file" id="imageInput" accept="image/*" style="display: none;" multiple>
+            </div>
+            
+            <div class="file-info" id="fileInfo">
+              <div id="fileDetails"></div>
+            </div>
+            
+            <img class="image-preview" id="imagePreview" alt="Preview">
+            
+            <div class="controls" style="justify-content: center; margin-top: 20px;">
+              <button class="btn btn-primary" id="uploadBtn" style="padding: 12px 32px;" disabled>
+                🔍 Analyze Images
+              </button>
+              <div class="status" id="uploadStatus" hidden>Processing images...</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+  
+      <!-- OCR Method Selection -->
+      <div class="card" style="max-width: 800px; margin: 0 auto 32px;">
+        <h3 style="margin: 0 0 16px; color: var(--brand-ink); font-size: 20px;">🤖 AI Processing Options</h3>
+        <p style="margin: 0 0 20px; color: var(--muted);">
+          Choose your preferred OCR method for text extraction from product images and labels.
+        </p>
+        
+        <div class="ocr-options">
+          <div class="ocr-card">
+            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+              <span style="font-size: 24px;">⚡</span>
+              <h3 style="margin: 0;">EasyOCR</h3>
+            </div>
+            <p>Fast and reliable OCR engine with multi-language support. Optimized for quick processing of product labels and packaging text.</p>
+            <button class="btn btn-primary" onclick="runOCR('easyocr')">Select EasyOCR</button>
+          </div>
+          <div class="ocr-card">
+            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+              <span style="font-size: 24px;">🧠</span>
+              <h3 style="margin: 0;">Mixtral AI OCR</h3>
+            </div>
+            <p>Advanced AI-powered OCR with enhanced accuracy for complex layouts. Better handling of stylized fonts and challenging image conditions.</p>
+            <button class="btn btn-secondary" onclick="runOCR('mixtral')">Select Mixtral AI</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Scraping Progress Section -->
+      <div class="card" id="resultContainer" style="max-width: 800px; margin: 0 auto 32px; background: white; border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow); display: none; text-align: center;">
+        <h3 style="margin: 0 0 16px; color: var(--brand-ink); font-size: 20px;">📊 Scraping Progress</h3>
+        <div id="progress" style="background: var(--bg); padding: 12px; border-radius: var(--radius-sm); margin-bottom: 16px; max-height: 200px; overflow-y: auto; text-align: left;"></div>
+        <div id="results" style="text-align: left;"></div>
+      </div>
+  
+      <!-- Compliance Validation Info -->
+      <div class="card" style="max-width: 800px; margin: 0 auto 32px;">
+        <h3 style="margin: 0 0 16px; color: var(--brand-ink); font-size: 20px;">📋 Validation Checklist</h3>
+        <p style="margin: 0 0 16px; color: var(--muted);">
+          Our system validates the following mandatory declarations as per Legal Metrology Rules:
+        </p>
+        
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px;">
+          <div style="padding: 12px; background: color-mix(in oklab, var(--brand) 5%, white 95%); border-radius: var(--radius-sm); border-left: 4px solid var(--brand);">
+            <strong>✓ MRP & Pricing</strong><br>
+            <small style="color: var(--muted);">Maximum Retail Price inclusive of all taxes</small>
+          </div>
+          <div style="padding: 12px; background: color-mix(in oklab, var(--brand) 5%, white 95%); border-radius: var(--radius-sm); border-left: 4px solid var(--brand);">
+            <strong>✓ Net Quantity</strong><br>
+            <small style="color: var(--muted);">Weight, measure, or number in standard units</small>
+          </div>
+          <div style="padding: 12px; background: color-mix(in oklab, var(--brand) 5%, white 95%); border-radius: var(--radius-sm); border-left: 4px solid var(--brand);">
+            <strong>✓ Manufacturer Details</strong><br>
+            <small style="color: var(--muted);">Name and address of manufacturer/packer</small>
+          </div>
+          <div style="padding: 12px; background: color-mix(in oklab, var(--brand) 5%, white 95%); border-radius: var(--radius-sm); border-left: 4px solid var(--brand);">
+            <strong>✓ Country of Origin</strong><br>
+            <small style="color: var(--muted);">Manufacturing or import country declaration</small>
+          </div>
+          <div style="padding: 12px; background: color-mix(in oklab, var(--brand) 5%, white 95%); border-radius: var(--radius-sm); border-left: 4px solid var(--brand);">
+            <strong>✓ Consumer Care</strong><br>
+            <small style="color: var(--muted);">Customer service contact information</small>
+          </div>
+          <div style="padding: 12px; background: color-mix(in oklab, var(--brand) 5%, white 95%); border-radius: var(--radius-sm); border-left: 4px solid var(--brand);">
+            <strong>✓ Date Information</strong><br>
+            <small style="color: var(--muted);">Manufacturing/import date and expiry</small>
+          </div>
+        </div>
+      </div>
+  
+  
+      <div class="error" id="errorBox" hidden></div>
+    </section>
+  </main>
+
+  <footer id="contact" class="container">
+    <div class="footer-row">
+      <span>&copy; <span id="year"></span> Legal Compliance Decypher</span>
+      <span>Privacy • Terms • Support</span>
+    </div>
+  </footer>
+
+  <script type="text/javascript">
+    var gk_isXlsx = false;
+    var gk_xlsxFileLookup = {};
+    var gk_fileData = {};
+    function filledCell(cell) {
+      return cell !== '' && cell != null;
+    }
+    function loadFileData(filename) {
+      if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+        try {
+          var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+          var firstSheetName = workbook.SheetNames[0];
+          var worksheet = workbook.Sheets[firstSheetName];
+          var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+          var filteredData = jsonData.filter(row => row.some(filledCell));
+          var headerRowIndex = filteredData.findIndex((row, index) =>
+            row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+          );
+          if (headerRowIndex === -1 || headerRowIndex > 25) {
+            headerRowIndex = 0;
+          }
+          var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex));
+          csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+          return csv;
+        } catch (e) {
+          console.error(e);
+          return "";
+        }
+      }
+      return gk_fileData[filename] || "";
+    }
+
+
+    // Smooth scroll helper
+    function scrollToId(id) {
+      const el = document.getElementById(id);
+      if (el) { el.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+    }
+    window.scrollToId = scrollToId;
+
+    // Set current year
+    document.getElementById('year').textContent = new Date().getFullYear();
+
+    // DOM elements
+    const scrapeBtn = document.getElementById('scrapeBtn');
+    const scrapeStatus = document.getElementById('scrapeStatus');
+    const errorBox = document.getElementById('errorBox');
+    const productUrlInput = document.getElementById('productUrl');
+    const uploadArea = document.getElementById('uploadArea');
+    const imageInput = document.getElementById('imageInput');
+    const uploadBtn = document.getElementById('uploadBtn');
+    const uploadStatus = document.getElementById('uploadStatus');
+    const fileInfo = document.getElementById('fileInfo');
+    const fileDetails = document.getElementById('fileDetails');
+    const imagePreview = document.getElementById('imagePreview');
+    let selectedOcrMethod = 'easyocr'; // Default OCR method
+    let uploadedFiles = [];
+
+    // Tab switching functionality
+    function switchTab(tabName) {
+      // Update tab buttons
+      document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+      event.target.classList.add('active');
+      
+      // Update tab panels
+      document.querySelectorAll('.tab-panel').forEach(panel => panel.classList.remove('active'));
+      document.getElementById(tabName + '-panel').classList.add('active');
+      
+      // Clear any previous errors
+      errorBox.hidden = true;
+    }
+    window.switchTab = switchTab;
+
+    // Image upload functionality
+    function handleFiles(files) {
+      uploadedFiles = Array.from(files);
+      const validFiles = uploadedFiles.filter(file => {
+        const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+        const maxSize = 10 * 1024 * 1024; // 10MB
+        return validTypes.includes(file.type) && file.size <= maxSize;
+      });
+      
+      if (validFiles.length === 0) {
+        errorBox.textContent = 'Please select valid image files (JPG, PNG, WEBP) under 10MB.';
+        errorBox.hidden = false;
+        return;
+      }
+      
+      uploadedFiles = validFiles;
+      
+      // Show file info
+      let fileDetailsHtml = `<strong>Selected Files:</strong><br>`;
+      uploadedFiles.forEach((file, index) => {
+        const sizeKB = (file.size / 1024).toFixed(1);
+        fileDetailsHtml += `${index + 1}. ${file.name} (${sizeKB} KB)<br>`;
+      });
+      
+      fileDetails.innerHTML = fileDetailsHtml;
+      fileInfo.style.display = 'block';
+      
+      // Show preview for first image
+      if (uploadedFiles.length > 0) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          imagePreview.src = e.target.result;
+          imagePreview.style.display = 'block';
+        };
+        reader.readAsDataURL(uploadedFiles[0]);
+      }
+      
+      // Enable upload button
+      uploadBtn.disabled = false;
+      errorBox.hidden = true;
+    }
+
+    // Drag and drop functionality
+    uploadArea.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      uploadArea.classList.add('dragover');
+    });
+    
+    uploadArea.addEventListener('dragleave', () => {
+      uploadArea.classList.remove('dragover');
+    });
+    
+    uploadArea.addEventListener('drop', (e) => {
+      e.preventDefault();
+      uploadArea.classList.remove('dragover');
+      handleFiles(e.dataTransfer.files);
+    });
+    
+    imageInput.addEventListener('change', (e) => {
+      handleFiles(e.target.files);
+    });
+
+    // Handle image upload processing
+    uploadBtn.addEventListener('click', () => {
+      if (uploadedFiles.length === 0) {
+        errorBox.textContent = 'Please select images to analyze.';
+        errorBox.hidden = false;
+        return;
+      }
+      
+      // Reset UI
+      errorBox.hidden = true;
+      uploadStatus.textContent = 'Processing images...';
+      uploadStatus.hidden = false;
+      uploadStatus.classList.add('active');
+      
+      // Show result container
+      const resultContainer = document.getElementById('resultContainer');
+      resultContainer.style.display = 'block';
+      document.getElementById('progress').innerHTML = '';
+      document.getElementById('results').innerHTML = '';
+      
+      const progressDiv = document.getElementById('progress');
+      const resultsDiv = document.getElementById('results');
+      
+      // Simulate image processing (you can replace this with actual API call)
+      progressDiv.innerHTML += `<p><strong>Image Processing:</strong> Analyzing ${uploadedFiles.length} image(s)...</p>`;
+      
+      // Process each image with OCR
+      uploadedFiles.forEach((file, index) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          progressDiv.innerHTML += `<p><strong>OCR Analysis:</strong> Processing ${file.name} with ${selectedOcrMethod.toUpperCase()}...</p>`;
+          progressDiv.scrollTop = progressDiv.scrollHeight;
+          
+          // Simulate OCR processing delay
+          setTimeout(() => {
+            progressDiv.innerHTML += `<p><strong>Text Extraction:</strong> Extracted text from ${file.name}</p>`;
+            
+            if (index === uploadedFiles.length - 1) {
+              // Final processing
+              setTimeout(() => {
+                uploadStatus.hidden = true;
+                uploadStatus.classList.remove('active');
+                
+                // Display mock results
+                let resultHtml = `<h4>Image Analysis Results</h4>`;
+                resultHtml += `<p><strong>Images Processed:</strong> ${uploadedFiles.length}</p>`;
+                resultHtml += `<p><strong>OCR Method:</strong> ${selectedOcrMethod.toUpperCase()}</p>`;
+                
+                // Mock compliance results
+                resultHtml += `<h4>Compliance Report</h4>`;
+                resultHtml += `<p><strong>Compliance Status:</strong> Partial Compliance</p>`;
+                resultHtml += `<p><strong>Compliance Percent:</strong> 75%</p>`;
+                resultHtml += `<p><strong>Violations Count:</strong> 2</p>`;
+                resultHtml += `<p><strong>Fields Detected:</strong> MRP, Net Quantity, Manufacturer Name</p>`;
+                resultHtml += `<p><strong>Missing Fields:</strong> Country of Origin, Consumer Care</p>`;
+                
+                resultsDiv.innerHTML = resultHtml;
+                progressDiv.innerHTML += `<p><strong>Complete:</strong> Analysis finished successfully!</p>`;
+              }, 1000);
+            }
+          }, 1500 * (index + 1));
+        };
+        reader.readAsDataURL(file);
+      });
+    });
+
+    // Update OCR method when clicking OCR buttons
+    function runOCR(type) {
+      selectedOcrMethod = type === 'mixtral' ? 'mistral' : 'easyocr';
+      document.querySelectorAll('.ocr-card').forEach(card => {
+        card.querySelector('button').classList.remove('btn-primary');
+        card.querySelector('button').classList.add('btn-secondary');
+      });
+      const selectedButton = document.querySelector(`.ocr-card button[onclick="runOCR('${type}')"]`);
+      selectedButton.classList.remove('btn-secondary');
+      selectedButton.classList.add('btn-primary');
+      errorBox.textContent = `Selected OCR method: ${type}`;
+      errorBox.hidden = false;
+    }
+
+    // Handle scraping
+    scrapeBtn.addEventListener('click', () => {
+      const url = productUrlInput.value.trim();
+      if (!url) {
+        errorBox.textContent = 'Please enter a valid product URL';
+        errorBox.hidden = false;
+        return;
+      }
+
+      // Validate URL (basic check for Amazon/Flipkart URLs)
+      if (!url.includes('amazon.') && !url.includes('flipkart.')) {
+        errorBox.textContent = 'Please provide a valid Amazon or Flipkart product URL';
+        errorBox.hidden = false;
+        return;
+      }
+
+      // Reset UI
+      errorBox.hidden = true;
+      scrapeStatus.textContent = 'Scraping...';
+      scrapeStatus.hidden = false;
+      scrapeStatus.classList.add('active');
+
+      // Show result container and clear previous content
+      const resultContainer = document.getElementById('resultContainer');
+      resultContainer.style.display = 'block';
+      document.getElementById('progress').innerHTML = '';
+      document.getElementById('results').innerHTML = '';
+
+      const progressDiv = document.getElementById('progress');
+      const resultsDiv = document.getElementById('results');
+
+      // Connect to SSE endpoint with absolute URL for iframe compatibility
+      const baseUrl = window.location.protocol + '//' + window.location.host;
+      const scrapeUrl = `${baseUrl}/scrape?url=${encodeURIComponent(url)}&ocr_method=${selectedOcrMethod}`;
+      console.log('Connecting to SSE endpoint:', scrapeUrl); // Debug log
+      const eventSource = new EventSource(scrapeUrl);
+
+      eventSource.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        console.log('Received SSE data:', data); // Debugging
+
+        // Update progress
+        progressDiv.innerHTML += `<p><strong>${data.step}:</strong> ${data.message}</p>`;
+        progressDiv.scrollTop = progressDiv.scrollHeight; // Auto-scroll to latest
+
+        // Handle completion
+        if (data.step === 'complete' || data.step === 'error') {
+          scrapeStatus.hidden = true;
+          scrapeStatus.classList.remove('active');
+          errorBox.textContent = data.message;
+          errorBox.hidden = !data.message;
+          if (data.step === 'complete') {
+            // Display results
+            let resultHtml = `<h4>Results</h4>`;
+            resultHtml += `<p><strong>Title:</strong> ${data.title}</p>`;
+            if (data.images.length > 0) {
+              resultHtml += `<p><strong>Images Processed:</strong> ${data.images.length}</p>`;
+              resultHtml += `<div style="display: flex; flex-wrap: wrap; gap: 10px;">`;
+              data.images.forEach(img => {
+                resultHtml += `
+                  <div style="max-width: 200px;">
+                    <img src="${img.url}" alt="Product Image" style="max-width: 100%; border-radius: var(--radius-sm);">
+                    <p style="font-size: 12px;"><strong>Extracted Text:</strong> ${img.text}</p>
+                  </div>`;
+              });
+              resultHtml += `</div>`;
+            } else {
+              resultHtml += `<p>No text-rich images found.</p>`;
+            }
+
+            // Display compliance results
+            const compliance = data.compliance_result;
+            resultHtml += `<h4>Compliance Report</h4>`;
+            resultHtml += `<p><strong>Compliance Status:</strong> ${compliance.compliance_status}</p>`;
+            resultHtml += `<p><strong>Compliance Percent:</strong> ${compliance.compliance_percent}%</p>`;
+            resultHtml += `<p><strong>Violations Count:</strong> ${compliance.violations_count}</p>`;
+            resultHtml += `<p><strong>Fields Present:</strong> ${compliance.actual_list.join(', ') || 'None'}</p>`;
+            resultHtml += `<p><strong>Fields Expected:</strong> ${compliance.expected_list.join(', ')}</p>`;
+            resultHtml += `<h5>Field Status:</h5><ul>`;
+            for (const [field, status] of Object.entries(compliance.field_status)) {
+              resultHtml += `<li>${field}: ${status}</li>`;
+            }
+            resultHtml += `</ul>`;
+
+            resultsDiv.innerHTML = resultHtml;
+          }
+          eventSource.close();
+        }
+      };
+
+      eventSource.onerror = () => {
+        scrapeStatus.hidden = true;
+        scrapeStatus.classList.remove('active');
+        errorBox.textContent = 'Error connecting to the server. Please try again.';
+        errorBox.hidden = false;
+        eventSource.close();
+      };
+    });
+
+  </script>
+</body>
+</html>

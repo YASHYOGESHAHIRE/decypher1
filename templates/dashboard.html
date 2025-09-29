@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Compliance Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .sidebar { position: fixed; top: 0; left: 0; height: 100vh; overflow-y: auto; }
+        .main-content { margin-left: 20rem; }
+        @media (max-width: 1024px) {
+            .sidebar { width: 100%; height: auto; position: relative; }
+            .main-content { margin-left: 0; }
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <div class="flex">
+        <!-- Sidebar for Filters -->
+        <div class="sidebar w-80 bg-white shadow-md p-4">
+            <h2 class="text-xl font-bold mb-4">Filters</h2>
+            <div class="space-y-4">
+                <!-- Search -->
+                <div>
+                    <label class="block text-sm font-medium">Search</label>
+                    <input type="text" id="search" class="w-full p-2 border rounded" placeholder="Search products...">
+                </div>
+
+                <!-- Categories -->
+                <div>
+                    <label class="block text-sm font-medium">Categories</label>
+                    <select multiple id="categories" class="w-full p-2 border rounded">
+                        <option value="Electronics">Electronics</option>
+                        <option value="Clothing">Clothing</option>
+                        <option value="Food">Food</option>
+                        <option value="Beauty">Beauty</option>
+                        <option value="Unknown">Unknown</option>
+                    </select>
+                </div>
+
+                <!-- Brands -->
+                <div>
+                    <label class="block text-sm font-medium">Brands</label>
+                    <select multiple id="brands" class="w-full p-2 border rounded">
+                        <option value="Samsung">Samsung</option>
+                        <option value="Apple">Apple</option>
+                        <option value="Nike">Nike</option>
+                        <option value="Maggi">Maggi</option>
+                        <option value="Lakme">Lakme</option>
+                        <option value="Sony">Sony</option>
+                        <option value="Adidas">Adidas</option>
+                        <option value="Britannia">Britannia</option>
+                    </select>
+                </div>
+
+                <!-- Platforms -->
+                <div>
+                    <label class="block text-sm font-medium">Platforms</label>
+                    <select multiple id="platforms" class="w-full p-2 border rounded">
+                        <option value="Amazon">Amazon</option>
+                        <option value="Flipkart">Flipkart</option>
+                        <option value="BigBasket">BigBasket</option>
+                        <option value="Nykaa">Nykaa</option>
+                        <option value="Myntra">Myntra</option>
+                        <option value="Grofers">Grofers</option>
+                    </select>
+                </div>
+
+                <!-- Compliance Status -->
+                <div>
+                    <label class="block text-sm font-medium">Compliance Status</label>
+                    <select multiple id="statuses" class="w-full p-2 border rounded">
+                        <option value="Compliant">Compliant</option>
+                        <option value="Partial">Partial</option>
+                        <option value="Non-Compliant">Non-Compliant</option>
+                    </select>
+                </div>
+
+                <!-- Field Presence -->
+                <div>
+                    <label class="block text-sm font-medium">Field Presence</label>
+                    <div class="space-y-2">
+                        <div class="flex items-center">
+                            <input type="checkbox" id="mrp_status" value="mrp_status:present" class="mr-2">
+                            <label class="text-sm" for="mrp_status">MRP</label>
+                        </div>
+                        <div class="flex items-center">
+                            <input type="checkbox" id="net_quantity_status" value="net_quantity_status:present" class="mr-2">
+                            <label class="text-sm" for="net_quantity_status">Net Quantity</label>
+                        </div>
+                        <div class="flex items-center">
+                            <input type="checkbox" id="expiry_date_status" value="expiry_date_status:present" class="mr-2">
+                            <label class="text-sm" for="expiry_date_status">Expiry Date</label>
+                        </div>
+                        <div class="flex items-center">
+                            <input type="checkbox" id="manufacturer_status" value="manufacturer_status:present" class="mr-2">
+                            <label class="text-sm" for="manufacturer_status">Manufacturer</label>
+                        </div>
+                        <div class="flex items-center">
+                            <input type="checkbox" id="country_of_origin_status" value="country_of_origin_status:present" class="mr-2">
+                            <label class="text-sm" for="country_of_origin_status">Country of Origin</label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Compliance Percentage Range -->
+                <div>
+                    <label class="block text-sm font-medium">Compliance %</label>
+                    <div class="flex space-x-2">
+                        <input type="number" id="compliance_min" class="w-1/2 p-2 border rounded" placeholder="Min">
+                        <input type="number" id="compliance_max" class="w-1/2 p-2 border rounded" placeholder="Max">
+                    </div>
+                </div>
+
+                <!-- OCR Confidence -->
+                <div>
+                    <label class="block text-sm font-medium">OCR Confidence</label>
+                    <input type="number" id="ocr_min" class="w-full p-2 border rounded" placeholder="Min">
+                </div>
+
+                <!-- Violations Count -->
+                <div>
+                    <label class="block text-sm font-medium">Violations Count</label>
+                    <div class="flex space-x-2">
+                        <input type="number" id="violations_min" class="w-1/2 p-2 border rounded" placeholder="Min">
+                        <input type="number" id="violations_max" class="w-1/2 p-2 border rounded" placeholder="Max">
+                    </div>
+                </div>
+
+                <!-- Crawl Date Range -->
+                <div>
+                    <label class="block text-sm font-medium">Crawl Date</label>
+                    <div class="flex space-x-2">
+                        <input type="date" id="date_start" class="w-1/2 p-2 border rounded">
+                        <input type="date" id="date_end" class="w-1/2 p-2 border rounded">
+                    </div>
+                </div>
+
+                <!-- Geo Location -->
+                <div>
+                    <label class="block text-sm font-medium">Geo Location</label>
+                    <select multiple id="geos" class="w-full p-2 border rounded">
+                        <option value="Pune, Maharashtra">Pune, Maharashtra</option>
+                    </select>
+                </div>
+
+                <!-- Sort -->
+                <div>
+                    <label class="block text-sm font-medium">Sort By</label>
+                    <select id="sort" class="w-full p-2 border rounded">
+                        <option value="compliance_percent:desc">Compliance % (Desc)</option>
+                        <option value="compliance_percent:asc">Compliance % (Asc)</option>
+                        <option value="crawl_date:desc">Crawl Date (Desc)</option>
+                        <option value="crawl_date:asc">Crawl Date (Asc)</option>
+                        <option value="violations_count:desc">Violations Count (Desc)</option>
+                        <option value="violations_count:asc">Violations Count (Asc)</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content p-6 w-full">
+            <h1 class="text-2xl font-bold mb-4">Compliance Dashboard</h1>
+            <div id="loading" class="text-center hidden">Loading...</div>
+            <div class="bg-white shadow-md rounded overflow-x-auto">
+                <table id="data-table" class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Product Name</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Category</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Brand</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Platform</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Compliance %</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Violations</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">OCR Confidence</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Crawl Date</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Geo</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Fields</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Link</th>
+                        </tr>
+                    </thead>
+                    <tbody id="table-body" class="bg-white divide-y divide-gray-200"></tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            <div class="mt-4 flex justify-between items-center">
+                <div id="pagination-info"></div>
+                <div class="flex space-x-2">
+                    <button id="prev-page" class="px-4 py-2 bg-gray-200 rounded disabled:opacity-50" disabled>Previous</button>
+                    <button id="next-page" class="px-4 py-2 bg-gray-200 rounded disabled:opacity-50" disabled>Next</button>
+                </div>
+                <div>
+                    <select id="page-size" class="p-2 border rounded">
+                        <option value="10">10 per page</option>
+                        <option value="25">25 per page</option>
+                        <option value="50">50 per page</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let page = 1;
+        let limit = 10;
+        let total = 0;
+
+        function getFilters() {
+            const fields = Array.from(document.querySelectorAll('input[type="checkbox"]:checked')).map(input => input.value);
+            const categories = Array.from(document.getElementById('categories').selectedOptions).map(option => option.value);
+            const brands = Array.from(document.getElementById('brands').selectedOptions).map(option => option.value);
+            const platforms = Array.from(document.getElementById('platforms').selectedOptions).map(option => option.value);
+            const statuses = Array.from(document.getElementById('statuses').selectedOptions).map(option => option.value);
+            const geos = Array.from(document.getElementById('geos').selectedOptions).map(option => option.value);
+
+            return {
+                q: document.getElementById('search').value,
+                categories,
+                brands,
+                platforms,
+                statuses,
+                fields,
+                compliance_min: document.getElementById('compliance_min').value,
+                compliance_max: document.getElementById('compliance_max').value,
+                ocr_min: document.getElementById('ocr_min').value,
+                violations_min: document.getElementById('violations_min').value,
+                violations_max: document.getElementById('violations_max').value,
+                date_start: document.getElementById('date_start').value,
+                date_end: document.getElementById('date_end').value,
+                geos,
+                sort: document.getElementById('sort').value
+            };
+        }
+
+        // Embedded dataset for fast client-side filtering
+        const EMBEDDED_DATA = [
+            {
+                name: "Samsung Galaxy S23 Ultra",
+                brand: "Samsung",
+                category: "Electronics",
+                platform: "Amazon",
+                compliance_percent: 85.5,
+                compliance_status: "Compliant",
+                violations_count: 2,
+                ocr_confidence_avg: 92.3,
+                crawl_date: "2024-01-15T10:30:00",
+                geo_location: "India",
+                seller_name: "Samsung Official Store",
+                mrp_status: "present",
+                net_quantity_status: "present",
+                manufacturer_status: "present"
+            },
+            {
+                name: "Apple iPhone 15 Pro",
+                brand: "Apple",
+                category: "Electronics", 
+                platform: "Amazon",
+                compliance_percent: 92.1,
+                compliance_status: "Compliant",
+                violations_count: 1,
+                ocr_confidence_avg: 95.7,
+                crawl_date: "2024-01-14T14:20:00",
+                geo_location: "India",
+                seller_name: "Apple Store",
+                mrp_status: "present",
+                net_quantity_status: "missing",
+                manufacturer_status: "present"
+            },
+            {
+                name: "Nike Air Max 270",
+                brand: "Nike",
+                category: "Clothing",
+                platform: "Flipkart",
+                compliance_percent: 67.8,
+                compliance_status: "Partial",
+                violations_count: 4,
+                ocr_confidence_avg: 78.9,
+                crawl_date: "2024-01-13T09:15:00",
+                geo_location: "India",
+                seller_name: "Nike Official",
+                mrp_status: "present",
+                net_quantity_status: "missing",
+                manufacturer_status: "missing"
+            },
+            {
+                name: "Maggi Noodles 2-Minute",
+                brand: "Maggi",
+                category: "Food",
+                platform: "BigBasket",
+                compliance_percent: 95.2,
+                compliance_status: "Compliant",
+                violations_count: 0,
+                ocr_confidence_avg: 88.4,
+                crawl_date: "2024-01-12T16:45:00",
+                geo_location: "India",
+                seller_name: "Nestle India",
+                mrp_status: "present",
+                net_quantity_status: "present",
+                manufacturer_status: "present"
+            },
+            {
+                name: "Lakme Foundation",
+                brand: "Lakme",
+                category: "Beauty",
+                platform: "Nykaa",
+                compliance_percent: 43.2,
+                compliance_status: "Non-Compliant",
+                violations_count: 7,
+                ocr_confidence_avg: 65.1,
+                crawl_date: "2024-01-11T11:30:00",
+                geo_location: "India",
+                seller_name: "Lakme Cosmetics",
+                mrp_status: "missing",
+                net_quantity_status: "missing",
+                manufacturer_status: "present"
+            },
+            {
+                name: "Sony WH-1000XM5 Headphones",
+                brand: "Sony",
+                category: "Electronics",
+                platform: "Amazon",
+                compliance_percent: 88.7,
+                compliance_status: "Compliant",
+                violations_count: 1,
+                ocr_confidence_avg: 91.2,
+                crawl_date: "2024-01-10T13:20:00",
+                geo_location: "India",
+                seller_name: "Sony India",
+                mrp_status: "present",
+                net_quantity_status: "present",
+                manufacturer_status: "missing"
+            },
+            {
+                name: "Adidas Ultraboost 22",
+                brand: "Adidas",
+                category: "Clothing",
+                platform: "Myntra",
+                compliance_percent: 72.4,
+                compliance_status: "Partial",
+                violations_count: 3,
+                ocr_confidence_avg: 82.6,
+                crawl_date: "2024-01-09T08:45:00",
+                geo_location: "India",
+                seller_name: "Adidas Official",
+                mrp_status: "present",
+                net_quantity_status: "missing",
+                manufacturer_status: "present"
+            },
+            {
+                name: "Britannia Good Day Cookies",
+                brand: "Britannia",
+                category: "Food",
+                platform: "Grofers",
+                compliance_percent: 91.3,
+                compliance_status: "Compliant",
+                violations_count: 1,
+                ocr_confidence_avg: 87.9,
+                crawl_date: "2024-01-08T15:10:00",
+                geo_location: "India",
+                seller_name: "Britannia Industries",
+                mrp_status: "present",
+                net_quantity_status: "present",
+                manufacturer_status: "missing"
+            }
+        ];
+
+        function fetchData() {
+            document.getElementById('loading').classList.remove('hidden');
+            try {
+                const filters = getFilters();
+                let filteredData = [...EMBEDDED_DATA];
+
+                // Apply search filter
+                if (filters.q) {
+                    const searchTerm = filters.q.toLowerCase();
+                    filteredData = filteredData.filter(item => 
+                        (item.name || '').toLowerCase().includes(searchTerm) ||
+                        (item.brand || '').toLowerCase().includes(searchTerm) ||
+                        (item.seller_name || '').toLowerCase().includes(searchTerm)
+                    );
+                }
+
+                // Apply category filter
+                if (filters.categories.length > 0) {
+                    filteredData = filteredData.filter(item => 
+                        filters.categories.includes(item.category)
+                    );
+                }
+
+                // Apply brand filter
+                if (filters.brands.length > 0) {
+                    filteredData = filteredData.filter(item => 
+                        filters.brands.includes(item.brand)
+                    );
+                }
+
+                // Apply platform filter
+                if (filters.platforms.length > 0) {
+                    filteredData = filteredData.filter(item => 
+                        filters.platforms.includes(item.platform)
+                    );
+                }
+
+                // Apply status filter
+                if (filters.statuses.length > 0) {
+                    filteredData = filteredData.filter(item => 
+                        filters.statuses.includes(item.compliance_status)
+                    );
+                }
+
+                // Apply compliance percent range
+                if (filters.compliance_min) {
+                    filteredData = filteredData.filter(item => 
+                        item.compliance_percent >= parseFloat(filters.compliance_min)
+                    );
+                }
+                if (filters.compliance_max) {
+                    filteredData = filteredData.filter(item => 
+                        item.compliance_percent <= parseFloat(filters.compliance_max)
+                    );
+                }
+
+                // Apply OCR confidence filter
+                if (filters.ocr_min) {
+                    filteredData = filteredData.filter(item => 
+                        item.ocr_confidence_avg >= parseFloat(filters.ocr_min)
+                    );
+                }
+
+                // Apply violations count range
+                if (filters.violations_min) {
+                    filteredData = filteredData.filter(item => 
+                        item.violations_count >= parseInt(filters.violations_min)
+                    );
+                }
+                if (filters.violations_max) {
+                    filteredData = filteredData.filter(item => 
+                        item.violations_count <= parseInt(filters.violations_max)
+                    );
+                }
+
+                // Apply date range filter
+                if (filters.date_start) {
+                    filteredData = filteredData.filter(item => 
+                        new Date(item.crawl_date) >= new Date(filters.date_start)
+                    );
+                }
+                if (filters.date_end) {
+                    filteredData = filteredData.filter(item => 
+                        new Date(item.crawl_date) <= new Date(filters.date_end + 'T23:59:59')
+                    );
+                }
+
+                // Apply geo filter
+                if (filters.geos.length > 0) {
+                    filteredData = filteredData.filter(item => 
+                        filters.geos.includes(item.geo_location)
+                    );
+                }
+
+                // Apply sorting
+                if (filters.sort) {
+                    const [field, direction] = filters.sort.split(':');
+                    const desc = direction === 'desc';
+                    filteredData.sort((a, b) => {
+                        let aVal = a[field];
+                        let bVal = b[field];
+                        
+                        if (typeof aVal === 'string') {
+                            aVal = aVal.toLowerCase();
+                            bVal = bVal.toLowerCase();
+                        }
+                        
+                        if (aVal < bVal) return desc ? 1 : -1;
+                        if (aVal > bVal) return desc ? -1 : 1;
+                        return 0;
+                    });
+                }
+
+                // Apply pagination
+                total = filteredData.length;
+                const startIndex = (page - 1) * limit;
+                const endIndex = startIndex + limit;
+                const paginatedData = filteredData.slice(startIndex, endIndex);
+
+                renderTable(paginatedData);
+                updatePagination();
+            } catch (error) {
+                console.error('Error processing data:', error);
+                document.getElementById('table-body').innerHTML = '<tr><td colspan="12" class="px-6 py-4 text-center">Error processing data</td></tr>';
+            } finally {
+                document.getElementById('loading').classList.add('hidden');
+            }
+        }
+
+        function renderTable(data) {
+            const tbody = document.getElementById('table-body');
+            tbody.innerHTML = '';
+            data.forEach(item => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${item.name || 'N/A'}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${item.category || 'N/A'}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${item.brand || 'N/A'}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${item.platform || 'N/A'}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${item.compliance_percent}%</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${item.compliance_status}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${item.violations_count}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${parseFloat(item.ocr_confidence_avg).toFixed(2)}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${new Date(item.crawl_date).toLocaleDateString()}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${item.geo_location}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${JSON.parse(item.actual_list || '[]').join(', ') || 'None'}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm"><a href="${item.product_link}" target="_blank" class="text-blue-600 hover:underline">View</a></td>
+                `;
+                tbody.appendChild(row);
+            });
+            if (!data.length) {
+                tbody.innerHTML = '<tr><td colspan="12" class="px-6 py-4 text-center">No data available</td></tr>';
+            }
+        }
+
+        function updatePagination() {
+            const totalPages = Math.ceil(total / limit);
+            document.getElementById('pagination-info').textContent = `Showing ${(page - 1) * limit + 1} to ${Math.min(page * limit, total)} of ${total} entries`;
+            document.getElementById('prev-page').disabled = page === 1;
+            document.getElementById('next-page').disabled = page === totalPages;
+        }
+
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+
+        // Event Listeners
+        document.querySelectorAll('input, select').forEach(element => {
+            element.addEventListener('change', debounce(() => {
+                page = 1;
+                fetchData();
+            }, 300));
+        });
+
+        document.getElementById('prev-page').addEventListener('click', () => {
+            if (page > 1) {
+                page--;
+                fetchData();
+            }
+        });
+
+        document.getElementById('next-page').addEventListener('click', () => {
+            if (page < Math.ceil(total / limit)) {
+                page++;
+                fetchData();
+            }
+        });
+
+        document.getElementById('page-size').addEventListener('change', (e) => {
+            limit = parseInt(e.target.value);
+            page = 1;
+            fetchData();
+        });
+
+        // Initial Data Fetch
+        fetchData();
+    </script>
+</body>
+</html>

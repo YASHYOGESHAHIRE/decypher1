@@ -1,0 +1,544 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>AI Legal Metrology Compliance Checker</title>
+  <meta name="description" content="AI-powered Legal Metrology Compliance Checker — analyze product labels for LM rules and generate actionable reports." />
+
+  <style>
+    /* Theme Tokens: 3–5 colors, no blues */
+    :root{
+      --bg: #f7f8f9;             /* neutral off-white */
+      --surface: #ffffff;         /* white surface */
+      --text: #111827;            /* gray-900 */
+      --muted: #6b7280;           /* gray-500 */
+      --border: #e5e7eb;          /* gray-200 */
+
+      --brand: #2f6b3f;           /* evergreen primary */
+      --brand-ink: #10361f;       /* deep evergreen for text accents */
+      --accent: #d97706;          /* warm amber accent */
+      --accent-ink: #7c3e00;      /* deeper amber for text on light accent */
+
+      --ring: rgba(217,119,6,0.35); /* amber ring */
+      --shadow: 0 10px 30px rgba(17,24,39,0.08);
+      --radius: 14px;
+      --radius-sm: 10px;
+      --radius-lg: 22px;
+      --container: 1200px;
+    }
+
+    /* Base Reset + Typography */
+    *,*::before,*::after{ box-sizing:border-box }
+    html,body{ margin:0; padding:0 }
+    body{
+      background: var(--bg);
+      color: var(--text);
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+    img{ max-width:100%; height:auto; display:block }
+    a{ color: var(--brand); text-decoration: none }
+    a:focus-visible, button:focus-visible, input:focus-visible, [role="button"]:focus-visible{
+      outline: 0;
+      box-shadow: 0 0 0 4px var(--ring);
+      border-radius: 10px;
+    }
+
+    /* Layout */
+    .container{ max-width: var(--container); margin: 0 auto; padding: 0 20px }
+    header{
+      position: sticky; top:0; z-index:50;
+      backdrop-filter: saturate(1.2) blur(8px);
+      background: color-mix(in oklab, var(--bg) 70%, white 30%);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav{
+      display:flex; align-items:center; justify-content:space-between;
+      height:72px;
+    }
+    .brand{ display:flex; align-items:center; gap:12px; font-weight:700; letter-spacing:0.2px; color:var(--brand-ink) }
+    .brand-badge{
+      width:34px; height:34px; border-radius:9px; display:grid; place-items:center;
+      background: color-mix(in oklab, var(--brand) 18%, white 82%);
+      color: var(--brand); font-weight:800;
+      box-shadow: 0 1px 0 rgba(0,0,0,0.04) inset;
+    }
+    .nav-links{ display:none; gap:22px; align-items:center }
+    .nav-links a{ color:#2b2f36; font-weight:600; opacity:0.9 }
+    .nav-cta{ display:none; gap:10px; align-items:center }
+    .nav-toggle{
+      appearance:none; border:1px solid var(--border); background: var(--surface);
+      width:44px; height:40px; border-radius:12px; display:grid; place-items:center;
+      cursor:pointer;
+    }
+    .nav-toggle span{ display:block; width:18px; height:2px; background:#2b2f36; position:relative }
+    .nav-toggle span::before, .nav-toggle span::after{
+      content:""; position:absolute; left:0; width:100%; height:2px; background:#2b2f36; transition:transform .25s ease, opacity .2s ease;
+    }
+    .nav-toggle span::before{ top:-6px } .nav-toggle span::after{ top:6px }
+
+    @media (min-width: 880px){
+      .nav-links{ display:flex }
+      .nav-cta{ display:flex }
+      .nav-toggle{ display:none }
+    }
+
+    /* Buttons */
+    .btn{
+      display:inline-flex; align-items:center; justify-content:center; gap:10px;
+      height:44px; padding:0 16px; border-radius:12px; border:1px solid transparent;
+      font-weight:700; letter-spacing:0.2px; cursor:pointer; transition: transform .04s ease, background .25s ease, border-color .25s ease, color .25s ease;
+      will-change: transform;
+    }
+    .btn:active{ transform: translateY(1px) }
+    .btn-primary{ background: var(--brand); color: #fff; }
+    .btn-primary:hover{ background: color-mix(in oklab, var(--brand) 92%, black 8%) }
+    .btn-secondary{ background: var(--surface); color:#2b2f36; border-color: var(--border) }
+    .btn-secondary:hover{ background: color-mix(in oklab, var(--surface) 90%, var(--bg) 10%) }
+    .btn-ghost{ background: transparent; color: var(--brand-ink) }
+
+    /* Hero */
+    .hero{
+      padding: 56px 0 24px;
+    }
+    .hero-grid{
+      display:grid; gap:28px;
+      grid-template-columns: 1fr;
+    }
+    @media (min-width: 980px){
+      .hero-grid{ grid-template-columns: 1.2fr .8fr; align-items:center }
+    }
+    .eyebrow{
+      display:inline-flex; align-items:center; gap:10px; padding:6px 12px; border-radius:999px;
+      background: color-mix(in oklab, var(--accent) 9%, white 91%);
+      color: var(--accent-ink); font-weight:700; border:1px solid color-mix(in oklab, var(--accent) 14%, var(--border) 86%);
+    }
+    .hero h1{
+      margin:16px 0 12px; line-height:1.15; letter-spacing:-0.02em;
+      font-size: clamp(28px, 5vw, 46px);
+    }
+    .hero p{ color: var(--muted); max-width: 60ch; margin:0 0 18px }
+    .hero-cta{ display:flex; gap:12px; flex-wrap:wrap; align-items:center }
+    .hero-callout{
+      display:flex; align-items:center; gap:10px; color:#2b2f36; opacity:0.9
+    }
+
+    /* KPI Cards */
+    .kpis{
+      margin-top: 22px;
+      display:grid; gap:14px; grid-template-columns: 1fr 1fr;
+    }
+    @media (min-width: 760px){ .kpis{ grid-template-columns: repeat(4,1fr) } }
+    .kpi{
+      background: var(--surface); border:1px solid var(--border); border-radius: var(--radius);
+      padding:16px; box-shadow: var(--shadow);
+    }
+    .kpi .value{ font-size: 24px; font-weight:800; color: var(--brand-ink) }
+    .kpi .label{ color: var(--muted); font-weight:600 }
+
+    /* Section */
+    section{ padding: 44px 0 }
+    .section-head{
+      display:flex; align-items:end; justify-content:space-between; gap:16px; flex-wrap:wrap;
+      margin-bottom: 18px;
+    }
+    .section-head h2{ font-size: clamp(22px, 3vw, 32px); margin:0; letter-spacing:-0.01em }
+    .section-sub{ color: var(--muted); max-width:70ch }
+
+    /* Features */
+    .features{
+      display:grid; gap:14px; grid-template-columns: 1fr;
+    }
+    @media (min-width: 760px){ .features{ grid-template-columns: repeat(3,1fr) } }
+    .feature{
+      background: var(--surface); border:1px solid var(--border); border-radius: var(--radius);
+      padding:18px; min-height: 180px; position:relative; overflow:hidden;
+      box-shadow: var(--shadow); transition: transform .15s ease, box-shadow .25s ease;
+    }
+    .feature:hover{ transform: translateY(-2px); box-shadow: 0 15px 40px rgba(17,24,39,0.12) }
+    .feature-icon{
+      width:40px; height:40px; border-radius:10px; display:grid; place-items:center;
+      background: color-mix(in oklab, var(--brand) 12%, white 88%);
+      color: var(--brand-ink); font-weight:900; margin-bottom: 12px;
+    }
+    .feature h3{ margin: 6px 0 8px }
+    .feature p{ color: var(--muted); margin:0 }
+
+    /* Steps */
+    .steps{ display:grid; gap:14px; grid-template-columns: 1fr; }
+    @media (min-width: 880px){ .steps{ grid-template-columns: repeat(3,1fr) } }
+    .step{
+      background: var(--surface); border:1px solid var(--border); border-radius: var(--radius);
+      padding:18px; box-shadow: var(--shadow)
+    }
+    .step-num{
+      width:34px; height:34px; border-radius:9px; display:grid; place-items:center; font-weight:800;
+      background: color-mix(in oklab, var(--accent) 12%, white 88%); color: var(--accent-ink);
+      border:1px solid color-mix(in oklab, var(--accent) 18%, var(--border) 82%);
+      margin-bottom: 8px;
+    }
+    .step h4{ margin: 2px 0 8px }
+    .step p{ color: var(--muted); margin:0 }
+
+    /* Sample Report */
+    .report{
+      background: var(--surface); border:1px solid var(--border); border-radius: var(--radius-lg);
+      padding: 18px; box-shadow: var(--shadow)
+    }
+    .table{
+      width:100%; border-collapse: collapse; margin-top: 6px;
+      border-radius: 12px; overflow:hidden;
+    }
+    .table thead th{
+      text-align:left; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase;
+      color:#374151; background: color-mix(in oklab, var(--bg) 70%, white 30%);
+      padding: 12px 10px; border-bottom:1px solid var(--border)
+    }
+    .table tbody td{
+      padding: 13px 10px; border-bottom: 1px solid var(--border); vertical-align: top;
+    }
+    .tag{
+      display:inline-flex; align-items:center; gap:8px; padding:6px 10px; border-radius:999px; font-weight:700; letter-spacing:0.2px;
+      background: color-mix(in oklab, var(--brand) 10%, white 90%); color: var(--brand-ink);
+      border:1px solid color-mix(in oklab, var(--brand) 18%, var(--border) 82%);
+    }
+    .tag.warn{
+      background: color-mix(in oklab, var(--accent) 10%, white 90%); color: var(--accent-ink);
+      border-color: color-mix(in oklab, var(--accent) 20%, var(--border) 80%);
+    }
+
+    /* CTA Banner */
+    .cta{
+      margin-top: 24px;
+      background: linear-gradient(180deg, color-mix(in oklab, var(--brand) 86%, black 14%), color-mix(in oklab, var(--brand) 92%, black 8%));
+      color: #fff; border-radius: var(--radius-lg);
+      padding: 28px;
+      display:grid; gap:16px; grid-template-columns: 1fr;
+      box-shadow: 0 18px 40px rgba(16,54,31,0.22);
+    }
+    .cta h3{ margin:0; line-height:1.2; letter-spacing:-0.01em }
+    .cta-row{ display:flex; flex-wrap:wrap; align-items:center; gap:10px }
+    .cta .btn-primary{ background:#ffffff; color: var(--brand-ink); border-color: transparent }
+    .cta .btn-primary:hover{ background: #f3f4f6 }
+    .cta .btn-secondary{ background: transparent; color:#ffffff; border-color: rgba(255,255,255,0.28) }
+    .cta .btn-secondary:hover{ background: rgba(255,255,255,0.08) }
+
+    @media (min-width: 880px){
+      .cta{ grid-template-columns: 1.2fr .8fr; align-items:center }
+    }
+
+    /* Footer */
+    footer{
+      padding: 28px 0 40px; color: #4b5563; font-size:14px
+    }
+
+    /* Mobile Drawer */
+    .drawer{ display:none; position:fixed; inset:72px 0 0 0; background: var(--surface); z-index: 40;
+      border-top:1px solid var(--border) }
+    .drawer.open{ display:block; animation: fade .18s ease }
+    .drawer .inner{ padding: 14px 20px; display:grid; gap:6px }
+    .drawer a{ padding:12px; border-radius:10px; color:#2b2f36; font-weight:600 }
+    .drawer a:hover{ background: color-mix(in oklab, var(--surface) 90%, var(--bg) 10%) }
+
+    @keyframes fade{ from{ opacity:0; transform: translateY(-6px) } to{ opacity:1; transform: none } }
+
+    /* Utilities */
+    .row{ display:flex; align-items:center; gap:10px; flex-wrap:wrap }
+    .muted{ color: var(--muted) }
+    .spacer-2{ height: 8px }
+    .spacer-4{ height: 16px }
+    .spacer-6{ height: 24px }
+    .spacer-8{ height: 32px }
+  </style>
+</head>
+<body>
+  <!-- Header removed for iframe embedding -->
+
+  <main>
+     Hero 
+    <section class="hero">
+      <div class="container hero-grid">
+        <div>
+          <span class="eyebrow">🇮🇳 Government-Grade AI Solution</span>
+          <h1>Automated Legal Metrology Compliance Checker for E-Commerce Platforms</h1>
+          <p>Ensure regulatory compliance across digital marketplaces with our AI-powered solution that validates product declarations against Legal Metrology (Packaged Commodities) Rules, 2011. Real-time scanning, OCR extraction, and intelligent rule validation for scalable enforcement.</p>
+          <div class="hero-cta">
+            <button class="btn btn-primary" id="upload">Upload Label</button>
+            <button class="btn btn-secondary" onclick="scrollToId('report')">See Sample Report</button>
+            <div class="hero-callout">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"></circle>
+                <path d="M7 12l3 3 7-7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+              </svg>
+              No data stored by default
+            </div>
+          </div>
+
+          <div class="kpis">
+            <div class="kpi">
+              <div class="value" data-countto="1000">0+</div>
+              <div class="label">Products Scanned Daily</div>
+            </div>
+            <div class="kpi">
+              <div class="value" data-countto="92">0%</div>
+              <div class="label">Violation Detection Rate</div>
+            </div>
+            <div class="kpi">
+              <div class="value" data-countto="30">0</div>
+              <div class="label">Seconds Average Scan Time</div>
+            </div>
+            <div class="kpi">
+              <div class="value" data-countto="12">0+</div>
+              <div class="label">Legal Metrology Rules Checked</div>
+            </div>
+          </div>
+        </div>
+
+        <div aria-hidden="true">
+          <div class="report" style="min-height:280px">
+            <div class="row">
+              <span class="tag warn">Violations: 4</span>
+              <span class="tag">Severity: Medium</span>
+            </div>
+            <div class="spacer-4"></div>
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Rule</th>
+                  <th>Finding</th>
+                  <th>Fix</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>MRP Placement</strong></td>
+                  <td class="muted">MRP not proximate to net quantity.</td>
+                  <td>Place MRP within 10mm of net quantity box.</td>
+                </tr>
+                <tr>
+                  <td><strong>Address Format</strong></td>
+                  <td class="muted">Street and PIN not on the same panel.</td>
+                  <td>Combine on back panel under “Customer Care”.</td>
+                </tr>
+                <tr>
+                  <td><strong>Font Size</strong></td>
+                  <td class="muted">Net quantity text too small for pack size.</td>
+                  <td>Increase to minimum 3mm height.</td>
+                </tr>
+                <tr>
+                  <td><strong>Date Marking</strong></td>
+                  <td class="muted">Mfg date missing month in words.</td>
+                  <td>Use MMM YYYY format (e.g., Sep 2025).</td>
+                </tr>
+              </tbody>
+            </table>
+            <div class="spacer-2"></div>
+            <p class="muted" style="margin:0">Preview of the automatic report you can download as PDF.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+     Features 
+    <section id="features">
+      <div class="container">
+        <div class="section-head">
+          <div>
+            <h2>Comprehensive Legal Metrology Compliance Solution</h2>
+            <p class="section-sub">Advanced AI-powered validation engine that ensures e-commerce platforms meet all Legal Metrology (Packaged Commodities) Rules, 2011 requirements with real-time monitoring and enforcement capabilities.</p>
+          </div>
+          <button class="btn btn-secondary" onclick="scrollToId('how')">See how it works</button>
+        </div>
+
+        <div class="features">
+          <article class="feature">
+            <div class="feature-icon">🔍</div>
+            <h3>Multi-Platform Web Crawling</h3>
+            <p>Real-time data acquisition from major e-commerce platforms (Amazon, Flipkart) with intelligent product listing extraction and batch processing capabilities.</p>
+          </article>
+          <article class="feature">
+            <div class="feature-icon">📱</div>
+            <h3>Advanced OCR & Computer Vision</h3>
+            <p>Multi-language OCR support with AI-powered image segmentation to identify and extract text from product labels and packaging declarations.</p>
+          </article>
+          <article class="feature">
+            <div class="feature-icon">⚖️</div>
+            <h3>Intelligent Rule Engine</h3>
+            <p>Configurable validation engine based on Legal Metrology Rules with support for regional variations and automatic rule updates.</p>
+          </article>
+          <article class="feature">
+            <div class="feature-icon">📊</div>
+            <h3>Regulatory Dashboard</h3>
+            <p>Comprehensive monitoring interface for regulators with real-time compliance scores, trend analysis, and geo-tagged violation heatmaps.</p>
+          </article>
+          <article class="feature">
+            <div class="feature-icon">🚨</div>
+            <h3>Violation Detection & Reporting</h3>
+            <p>Automated flagging of non-compliance issues including missing MRP, incorrect units, misleading quantities, and absent country of origin.</p>
+          </article>
+          <article class="feature">
+            <div class="feature-icon">🔒</div>
+            <h3>Enterprise Security & Scalability</h3>
+            <p>Cloud-based architecture with secure data logging, access control for regulators, and scalable infrastructure for large-scale enforcement.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+     How it works 
+    <section id="how">
+      <div class="container">
+        <div class="section-head">
+          <div>
+            <h2>How it works</h2>
+            <p class="section-sub">Three steps from product URL to comprehensive compliance analysis.</p>
+          </div>
+        </div>
+
+        <div class="steps">
+          <div class="step">
+            <div class="step-num">1</div>
+            <h4>Enter Product URL</h4>
+            <p>Paste any Amazon or Flipkart product URL. Our system will automatically fetch and analyze the product listing.</p>
+          </div>
+          <div class="step">
+            <div class="step-num">2</div>
+            <h4>AI Compliance Scan</h4>
+            <p>Advanced OCR extracts text from product images and validates against Legal Metrology rules in real-time.</p>
+          </div>
+          <div class="step">
+            <div class="step-num">3</div>
+            <h4>View Results</h4>
+            <p>Get instant compliance status with detailed violation reports and regulatory recommendations.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Sample Report -->
+    <section id="report">
+      <div class="container">
+        <div class="section-head">
+          <div>
+            <h2>Sample compliance report</h2>
+            <p class="section-sub">See how issues are grouped, prioritized, and explained with the exact fix steps.</p>
+          </div>
+          <div class="row">
+            <button class="btn btn-secondary" onclick="scrollToId('features')">View Features</button>
+          </div>
+        </div>
+
+        <div class="report">
+          <table class="table" role="table" aria-label="Sample Compliance Findings">
+            <thead>
+            <tr>
+              <th style="width:20%">Category</th>
+              <th style="width:55%">Issue</th>
+              <th style="width:25%">Recommended fix</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr>
+              <td><span class="tag warn">Proximity</span></td>
+              <td class="muted">MRP and Net Quantity are on separate panels.</td>
+              <td>Place both on the same panel within 10mm.</td>
+            </tr>
+            <tr>
+              <td><span class="tag">Font</span></td>
+              <td class="muted">Net Quantity height is 2.1mm; minimum is 3mm.</td>
+              <td>Increase font size to ≥3mm.</td>
+            </tr>
+            <tr>
+              <td><span class="tag">Format</span></td>
+              <td class="muted">Manufacturing date not in MMM YYYY format.</td>
+              <td>Format as “Sep 2025”.</td>
+            </tr>
+            <tr>
+              <td><span class="tag">Address</span></td>
+              <td class="muted">Street and PIN are split across lines.</td>
+              <td>Combine into one line on back panel.</td>
+            </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="cta">
+          <div>
+            <h3>Ensure marketplace compliance in seconds, not hours.</h3>
+            <p class="muted" style="color:rgba(255,255,255,0.85)">Scan any e-commerce product to get instant compliance verification and detailed regulatory analysis.</p>
+          </div>
+          <div class="cta-row">
+            <button class="btn btn-primary" onclick="window.parent.postMessage({action: 'navigate', page: 'scanner'}, '*')">Start Scanning</button>
+            <button class="btn btn-secondary" onclick="scrollToId('contact')">Contact Support</button>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer id="contact" class="container">
+    <div class="row" style="justify-content:space-between">
+      <span>&copy; <span id="year"></span> Legal Metrology AI</span>
+      <span>Privacy • Terms • Support</span>
+    </div>
+  </footer>
+
+  <script>
+    // Mobile nav drawer
+    const drawer = document.getElementById('drawer');
+    const menuBtn = document.getElementById('menuBtn');
+
+    function toggleDrawer(){
+      drawer.classList.toggle('open');
+      const expanded = menuBtn.getAttribute('aria-expanded') === 'true';
+      menuBtn.setAttribute('aria-expanded', String(!expanded));
+    }
+    function closeDrawer(){ drawer.classList.remove('open'); menuBtn.setAttribute('aria-expanded','false'); }
+    menuBtn.addEventListener('click', toggleDrawer);
+    drawer.addEventListener('click', (e)=>{ if(e.target === drawer){ closeDrawer(); } });
+
+    // Smooth scroll helper
+    function scrollToId(id){
+      const el = document.getElementById(id);
+      if(el){ el.scrollIntoView({ behavior:'smooth', block:'start' }); }
+    }
+    window.scrollToId = scrollToId;
+    window.closeDrawer = closeDrawer;
+
+    // Animated counters
+    const counters = document.querySelectorAll('[data-countto]');
+    const io = new IntersectionObserver((entries)=>{
+      entries.forEach(entry=>{
+        if(entry.isIntersecting){
+          const el = entry.target;
+          animateCount(el, Number(el.getAttribute('data-countto')));
+          io.unobserve(el);
+        }
+      });
+    }, { threshold: 0.5 });
+    counters.forEach(el=> io.observe(el));
+
+    function animateCount(el, target){
+      const text = el.textContent || '';
+      const suffix = /[%+x/7]+$/.exec(text)?.[0] || '';
+      let start = 0;
+      const duration = 900;
+      const startTime = performance.now();
+      function step(now){
+        const p = Math.min(1, (now - startTime)/duration);
+        const value = Math.round(start + (target - start)*easeOutCubic(p));
+        el.textContent = value + suffix;
+        if(p<1) requestAnimationFrame(step);
+      }
+      requestAnimationFrame(step);
+    }
+    function easeOutCubic(t){ return 1 - Math.pow(1 - t, 3); }
+
+    // Year
+    document.getElementById('year').textContent = new Date().getFullYear();
+  </script>
+</body>
+</html>

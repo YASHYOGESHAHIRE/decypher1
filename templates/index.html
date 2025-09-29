@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Amazon Product Scraper</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 font-sans">
+    <div class="container mx-auto p-4 max-w-4xl">
+        <h1 class="text-3xl font-bold mb-6 text-center text-gray-800">Amazon Product Scraper</h1>
+        <div class="bg-white p-4 rounded-lg shadow-md mb-6">
+            <h2 class="text-xl font-semibold mb-3">OCR Method</h2>
+            <div class="flex space-x-4">
+                <label class="inline-flex items-center">
+                    <input type="radio" name="ocrMethod" value="easyocr" class="form-radio text-blue-500" checked>
+                    <span class="ml-2">EasyOCR</span>
+                </label>
+                <label class="inline-flex items-center">
+                    <input type="radio" name="ocrMethod" value="mistral" class="form-radio text-blue-500">
+                    <span class="ml-2">Mistral AI</span>
+                </label>
+                <label class="inline-flex items-center">
+                    <input type="radio" name="ocrMethod" value="both" class="form-radio text-blue-500">
+                    <span class="ml-2">Both (Compare)</span>
+                </label>
+            </div>
+        </div>
+        
+        <div class="bg-white p-6 rounded-lg shadow-md mb-6">
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Enter Amazon Product URL:</label>
+                <input id="urlInput" type="url" placeholder="https://www.amazon.com/..." 
+{{ ... }}
+        <div id="loading" class="hidden text-center py-4">
+            <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+            <p class="mt-2 text-gray-600">Scraping product...</p>
+        </div>
+        
+        <div id="result" class="bg-white p-6 rounded-lg shadow-md hidden">
+            <div id="error" class="hidden text-red-500 p-4 bg-red-50 rounded mb-4"></div>
+            <h2 id="title" class="text-xl font-semibold text-gray-800 mb-2">Product Title: N/A</h2>
+            <div id="timingInfo" class="mb-4 p-3 bg-gray-50 rounded">
+                <h3 class="font-medium text-gray-700 mb-2">Processing Times:</h3>
+                <div class="grid grid-cols-2 gap-4">
+                    <div id="easyocrTime" class="p-2 bg-white rounded border">
+                        <div class="text-sm text-gray-500">EasyOCR</div>
+                        <div class="font-mono">-</div>
+                    </div>
+                    <div id="mistralTime" class="p-2 bg-white rounded border">
+                        <div class="text-sm text-gray-500">Mistral AI</div>
+                        <div class="font-mono">-</div>
+                    </div>
+                </div>
+                <div id="timeComparison" class="mt-3 text-sm text-gray-600 hidden"></div>
+            </div>
+            <div id="images" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                <!-- Images will be inserted here -->
+            </div>
+        </div>
+        
+        <div id="noResult" class="text-center py-8 text-gray-500">
+            <p>Enter a URL and click "Scrape Product" to see results</p>
+        </div>
+    </div>
+
+    <script>
+        function updateTimingInfo(method, time) {
+            const timeElement = document.getElementById(`${method}Time`).querySelector('.font-mono');
+            timeElement.textContent = time === null ? '-' : `${time.toFixed(2)}s`;
+            
+            // Update comparison if both times are available
+            const easyocrTime = parseFloat(document.getElementById('easyocrTime').querySelector('.font-mono').textContent);
+            const mistralTime = parseFloat(document.getElementById('mistralTime').querySelector('.font-mono').textContent);
+            
+            if (!isNaN(easyocrTime) && !isNaN(mistralTime) && easyocrTime > 0 && mistralTime > 0) {
+                const comparisonDiv = document.getElementById('timeComparison');
+                const difference = Math.abs(easyocrTime - mistralTime);
+                const fasterMethod = easyocrTime < mistralTime ? 'EasyOCR' : 'Mistral AI';
+                comparisonDiv.textContent = `${fasterMethod} was ${difference.toFixed(2)}s faster`;
+                comparisonDiv.className = `mt-3 text-sm ${fasterMethod === 'EasyOCR' ? 'text-green-600' : 'text-blue-600'}`;
+                comparisonDiv.classList.remove('hidden');
+            }
+        }
+        
+        async function scrapeProduct() {
+            const url = document.getElementById("urlInput").value.trim();
+            const resultDiv = document.getElementById("result");
+            const titleDiv = document.getElementById("title");
+            const imagesDiv = document.getElementById("images");
+            const errorDiv = document.getElementById("error");
+            const loadingDiv = document.getElementById("loading");
+            const noResultDiv = document.getElementById("noResult");
+            const scrapeBtn = document.getElementById("scrapeBtn");
+            const ocrMethod = document.querySelector('input[name="ocrMethod"]:checked').value;
+            
+            if (!url) {
+                showError("Please enter a valid Amazon URL");
+                return;
+            }
+            
+            // Show loading
+            loadingDiv.classList.remove("hidden");
+            resultDiv.classList.add("hidden");
+            noResultDiv.classList.add("hidden");
+            errorDiv.classList.add("hidden");
+            scrapeBtn.disabled = true;
+            scrapeBtn.textContent = "Scraping...";
+            
+            // Reset timing info
+            document.getElementById('easyocrTime').querySelector('.font-mono').textContent = '-';
+            document.getElementById('mistralTime').querySelector('.font-mono').textContent = '-';
+            document.getElementById('timeComparison').classList.add('hidden');
+            
+            try {
+                let data;
+                const startTime = performance.now();
+                
+                if (ocrMethod === 'both') {
+                    // Run both OCR methods in sequence
+                    const easyOcrStart = performance.now();
+                    const easyOcrResponse = await fetch(`/scrape?url=${encodeURIComponent(url)}&ocr_method=easyocr`);
+                    const easyOcrData = await easyOcrResponse.json();
+                    updateTimingInfo('easyocr', (performance.now() - easyOcrStart) / 1000);
+                    
+                    const mistralStart = performance.now();
+                    const mistralResponse = await fetch(`/scrape?url=${encodeURIComponent(url)}&ocr_method=mistral`);
+                    const mistralData = await mistralResponse.json();
+                    updateTimingInfo('mistral', (performance.now() - mistralStart) / 1000);
+                    
+                    // Use the first successful result
+                    data = easyOcrData.success ? easyOcrData : mistralData;
+                } else {
+                    // Single OCR method
+                    const response = await fetch(`/scrape?url=${encodeURIComponent(url)}&ocr_method=${ocrMethod}`);
+                    data = await response.json();
+                    updateTimingInfo(ocrMethod, (performance.now() - startTime) / 1000);
+                }
+                
+                if (!data.success) {
+                    throw new Error(data.message || 'Failed to process the request');
+                }
+                
+                // Update UI with results
+                loadingDiv.classList.add("hidden");
+                resultDiv.classList.remove("hidden");
+                noResultDiv.classList.add("hidden");
+                
+                titleDiv.textContent = `Product Title: ${data.title || 'N/A'}`;
+                
+                imagesDiv.innerHTML = "";
+                if (data.images && data.images.length > 0) {
+                    data.images.forEach(img => {
+                        const imgElement = document.createElement("div");
+                        imgElement.className = "bg-gray-50 p-2 rounded border";
+                        imgElement.innerHTML = `
+                            <img src="${img}" alt="Product Image" 
+                                 class="w-full h-48 object-contain rounded" 
+                                 onerror="this.style.display='none'; this.nextElementSibling.textContent='Image failed to load';">
+                            <p class="text-xs text-gray-500 mt-1 truncate">${img}</p>
+                        `;
+                        imagesDiv.appendChild(imgElement);
+                    });
+                } else {
+                    imagesDiv.innerHTML = '<p class="col-span-full text-gray-500">No images found</p>';
+                }
+                
+            } catch (error) {
+                console.error('Scrape error:', error);
+                showError(`Error: ${error.message}. Please check the URL and try again.`);
+            } finally {
+                loadingDiv.classList.add("hidden");
+                scrapeBtn.disabled = false;
+                scrapeBtn.textContent = "Scrape Product";
+            }
+        }
+        
+        function showError(message) {
+            const errorDiv = document.getElementById("error");
+            errorDiv.textContent = message;
+            errorDiv.classList.remove("hidden");
+            document.getElementById("result").classList.remove("hidden");
+            document.getElementById("noResult").classList.add("hidden");
+        }
+        
+        // Allow Enter key to scrape
+        document.getElementById("urlInput").addEventListener("keypress", function(e) {
+            if (e.key === "Enter") {
+                scrapeProduct();
+            }
+        });
+    </script>
+</body>
+</html>

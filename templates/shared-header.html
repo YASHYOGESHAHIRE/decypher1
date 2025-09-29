@@ -1,0 +1,80 @@
+<!-- Shared Header Template for Compliance Checker -->
+<header id="header" role="banner" aria-label="Main header">
+  <div class="container nav" role="navigation" aria-label="Primary">
+    <a href="landing.html" class="brand">
+      <span class="brand-mark" aria-hidden="true">CC</span>
+      <span>Compliance Checker</span>
+    </a>
+
+    <nav class="nav-links" aria-label="Main">
+      <a href="landing.html#features">Features</a>
+      <a href="landing.html#how">How it works</a>
+      <a href="docs.html">Docs</a>
+      <a href="api.html">API</a>
+      <a href="dashboard.html">Dashboard</a>
+      <a href="analytics.html">Analytics</a>
+    </nav>
+
+    <div class="nav-actions">
+      <button class="btn btn-ghost" data-open-auth="login" aria-haspopup="dialog" aria-controls="auth-modal">Log in</button>
+      <button class="btn btn-primary" data-open-auth="signup" aria-haspopup="dialog" aria-controls="auth-modal">Sign up</button>
+    </div>
+
+    <button class="menu-toggle" id="menuToggle" aria-expanded="false" aria-controls="mobileMenu" aria-label="Open menu">☰</button>
+  </div>
+
+  <div id="mobileMenu" class="container mobile-menu" role="navigation" aria-label="Mobile">
+    <a href="landing.html#features">Features</a>
+    <a href="landing.html#how">How it works</a>
+    <a href="docs.html">Docs</a>
+    <a href="api.html">API</a>
+    <a href="dashboard.html">Dashboard</a>
+    <a href="analytics.html">Analytics</a>
+    <div style="display:flex;gap:8px;padding-top:4px">
+      <button class="btn btn-ghost" data-open-auth="login" aria-haspopup="dialog" aria-controls="auth-modal">Log in</button>
+      <button class="btn btn-primary" data-open-auth="signup" aria-haspopup="dialog" aria-controls="auth-modal">Sign up</button>
+    </div>
+  </div>
+</header>
+
+<!-- Shared Auth Modal -->
+<dialog id="auth-modal" aria-labelledby="auth-title">
+  <form method="dialog" style="margin:0">
+    <div style="padding:16px;border-bottom:1px solid rgba(15,23,42,.06);display:flex;align-items:center;justify-content:space-between">
+      <strong id="auth-title">Welcome back</strong>
+      <button class="btn" value="close">Close</button>
+    </div>
+    <div style="padding:16px">
+      <div style="display:flex;gap:8px;margin-bottom:12px">
+        <button type="button" class="btn btn-ghost" data-auth-tab="login" aria-pressed="true">Log in</button>
+        <button type="button" class="btn btn-ghost" data-auth-tab="signup">Sign up</button>
+      </div>
+      <div id="login-form">
+        <label style="display:block;margin-bottom:8px">
+          <span class="kicker" style="display:block;margin-bottom:6px;color:var(--muted)">Email</span>
+          <input type="email" required placeholder="you@example.com" style="width:100%;padding:10px;border:1px solid rgba(15,23,42,.12);border-radius:10px">
+        </label>
+        <label style="display:block;margin-bottom:12px">
+          <span class="kicker" style="display:block;margin-bottom:6px;color:var(--muted)">Password</span>
+          <input type="password" required placeholder="••••••••" style="width:100%;padding:10px;border:1px solid rgba(15,23,42,.12);border-radius:10px">
+        </label>
+        <button class="btn btn-primary" style="width:100%">Log in</button>
+      </div>
+      <div id="signup-form" hidden>
+        <label style="display:block;margin-bottom:8px">
+          <span class="kicker" style="display:block;margin-bottom:6px;color:var(--muted)">Full name</span>
+          <input type="text" required placeholder="Jane Doe" style="width:100%;padding:10px;border:1px solid rgba(15,23,42,.12);border-radius:10px">
+        </label>
+        <label style="display:block;margin-bottom:8px">
+          <span class="kicker" style="display:block;margin-bottom:6px;color:var(--muted)">Email</span>
+          <input type="email" required placeholder="you@example.com" style="width:100%;padding:10px;border:1px solid rgba(15,23,42,.12);border-radius:10px">
+        </label>
+        <label style="display:block;margin-bottom:12px">
+          <span class="kicker" style="display:block;margin-bottom:6px;color:var(--muted)">Password</span>
+          <input type="password" required placeholder="Create a password" style="width:100%;padding:10px;border:1px solid rgba(15,23,42,.12);border-radius:10px">
+        </label>
+        <button class="btn btn-primary" style="width:100%">Create account</button>
+      </div>
+    </div>
+  </form>
+</dialog>

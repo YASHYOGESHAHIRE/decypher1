@@ -1,0 +1,25 @@
+{
+  "name": "compliance-checker",
+  "version": "1.0.0",
+  "description": "Legal Metrology Compliance Checker - A comprehensive tool for validating product compliance with Indian legal metrology standards",
+  "main": "index.html",
+  "scripts": {
+    "dev": "python -m http.server 8000",
+    "build": "echo 'Static site - no build required'",
+    "start": "python -m http.server 8000"
+  },
+  "keywords": [
+    "compliance",
+    "legal-metrology",
+    "product-validation",
+    "ocr",
+    "analytics"
+  ],
+  "author": "Compliance Checker Team",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-username/compliance-checker.git"
+  },
+  "homepage": "https://compliance-checker.vercel.app"
+}

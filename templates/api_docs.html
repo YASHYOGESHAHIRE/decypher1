@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Documentation and Try-Out</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f4f4f9;
+            color: #333;
+        }
+        h1 {
+            text-align: center;
+            color: #4a4a8c;
+        }
+        .api-section {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 30px;
+            background-color: #fff;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .api-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .api-method {
+            background-color: #28a745;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 4px;
+            margin-right: 10px;
+            font-weight: bold;
+        }
+        .api-path {
+            font-size: 1.2em;
+            font-weight: bold;
+        }
+        .description {
+            margin-bottom: 15px;
+        }
+        .parameters {
+            margin-bottom: 15px;
+        }
+        .param {
+            margin-bottom: 10px;
+        }
+        .param label {
+            display: block;
+            font-weight: bold;
+        }
+        .param input, .param select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        .try-out-btn {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1em;
+        }
+        .try-out-btn:hover {
+            background-color: #0056b3;
+        }
+        .response {
+            margin-top: 20px;
+            background-color: #f8f9fa;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 15px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .loading {
+            font-style: italic;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation removed for iframe embedding -->
+    <div style="text-align: center; margin-bottom: 40px;">
+        <h1 style="color: #2f6b3f; margin-bottom: 16px;">Legal Metrology Compliance API Documentation</h1>
+        <p style="font-size: 18px; color: #4b5563; max-width: 800px; margin: 0 auto 20px;">
+            Comprehensive API suite for automated Legal Metrology compliance validation. Integrate real-time product scanning, 
+            OCR processing, and regulatory validation into your e-commerce platform or regulatory monitoring system.
+        </p>
+        <div style="display: flex; justify-content: center; gap: 16px; flex-wrap: wrap; margin-top: 24px;">
+            <span style="background: #dcfce7; color: #166534; padding: 6px 12px; border-radius: 20px; font-size: 14px; font-weight: 600;">
+                🔍 Real-time Scanning
+            </span>
+            <span style="background: #dbeafe; color: #1e40af; padding: 6px 12px; border-radius: 20px; font-size: 14px; font-weight: 600;">
+                🤖 AI-Powered OCR
+            </span>
+            <span style="background: #fef3c7; color: #92400e; padding: 6px 12px; border-radius: 20px; font-size: 14px; font-weight: 600;">
+                ⚖️ Rule Validation
+            </span>
+            <span style="background: #f3e8ff; color: #7c3aed; padding: 6px 12px; border-radius: 20px; font-size: 14px; font-weight: 600;">
+                📊 Analytics API
+            </span>
+        </div>
+        <p style="margin-top: 20px; font-size: 14px; color: #6b7280;">
+            <strong>Note:</strong> Ensure the backend server is running at <code>http://localhost:8000</code> for testing. 
+            Production deployment supports government-grade security and scalability.
+        </p>
+    </div>
+
+    <!-- API Section: /scrape -->
+    <div class="api-section" id="scrape-section">
+        <div class="api-header">
+            <span class="api-method">GET</span>
+            <span class="api-path">/scrape</span>
+        </div>
+        <div class="description">
+            <p>Scrapes an Amazon product page, extracts text from images using OCR, validates compliance against Legal Metrology rules, and streams the process in real-time. Returns a stream of JSON messages.</p>
+            <p><strong>Notes:</strong> URL must be a valid Amazon product URL containing /dp/ or /product/. OCR method must be 'easyocr' or 'mistral'. The response is streamed via Server-Sent Events (SSE).</p>
+        </div>
+        <div class="parameters">
+            <div class="param">
+                <label for="scrape-url">url (required, string):</label>
+                <input type="text" id="scrape-url" placeholder="e.g., https://www.amazon.in/dp/B07HGBMHTR">
+            </div>
+            <div class="param">
+                <label for="scrape-ocr_method">ocr_method (required, string):</label>
+                <select id="scrape-ocr_method">
+                    <option value="easyocr">easyocr</option>
+                    <option value="mistral">mistral</option>
+                </select>
+            </div>
+        </div>
+        <button class="try-out-btn" onclick="tryScrape()">Try It Out</button>
+        <div class="response" id="scrape-response"></div>
+    </div>
+
+    <!-- API Section: /api/data -->
+    <div class="api-section" id="data-section">
+        <div class="api-header">
+            <span class="api-method">GET</span>
+            <span class="api-path">/api/data</span>
+        </div>
+        <div class="description">
+            <p>Fetches filtered and paginated compliance data from the Supabase database. Returns flattened data for easier handling.</p>
+            <p><strong>Notes:</strong> Supports various filters like search, categories, brands, etc. Use comma-separated values for lists (e.g., categories=Electronics,Food).</p>
+            <p><strong>Pagination:</strong> The 'limit' parameter specifies the maximum number of records to return per page. If fewer records are available, only the actual records are returned (e.g., requesting limit=10 but only 2 records exist will return 2 records, not 10).</p>
+        </div>
+        <div class="parameters">
+            <div class="param">
+                <label for="data-q">q (optional, string - search term):</label>
+                <input type="text" id="data-q" placeholder="Search term">
+            </div>
+            <div class="param">
+                <label for="data-categories">categories (optional, list<string>):</label>
+                <input type="text" id="data-categories" placeholder="e.g., Electronics,Food">
+            </div>
+            <div class="param">
+                <label for="data-brands">brands (optional, list<string>):</label>
+                <input type="text" id="data-brands" placeholder="e.g., Samsung,Apple">
+            </div>
+            <div class="param">
+                <label for="data-platforms">platforms (optional, list<string>):</label>
+                <input type="text" id="data-platforms" placeholder="e.g., Amazon,Flipkart">
+            </div>
+            <div class="param">
+                <label for="data-statuses">statuses (optional, list<string>):</label>
+                <input type="text" id="data-statuses" placeholder="e.g., Full,Partial">
+            </div>
+            <div class="param">
+                <label for="data-fields">fields (optional, list<string> - e.g., mrp_status:present):</label>
+                <input type="text" id="data-fields" placeholder="e.g., mrp_status:present,net_quantity_status:missing">
+            </div>
+            <div class="param">
+                <label for="data-compliance_min">compliance_min (optional, float):</label>
+                <input type="number" id="data-compliance_min" step="0.1" placeholder="e.g., 50.0">
+            </div>
+            <div class="param">
+                <label for="data-compliance_max">compliance_max (optional, float):</label>
+                <input type="number" id="data-compliance_max" step="0.1" placeholder="e.g., 100.0">
+            </div>
+            <div class="param">
+                <label for="data-ocr_min">ocr_min (optional, float):</label>
+                <input type="number" id="data-ocr_min" step="0.1" placeholder="e.g., 0.5">
+            </div>
+            <div class="param">
+                <label for="data-violations_min">violations_min (optional, int):</label>
+                <input type="number" id="data-violations_min" placeholder="e.g., 0">
+            </div>
+            <div class="param">
+                <label for="data-violations_max">violations_max (optional, int):</label>
+                <input type="number" id="data-violations_max" placeholder="e.g., 5">
+            </div>
+            <div class="param">
+                <label for="data-date_start">date_start (optional, string - YYYY-MM-DD):</label>
+                <input type="date" id="data-date_start">
+            </div>
+            <div class="param">
+                <label for="data-date_end">date_end (optional, string - YYYY-MM-DD):</label>
+                <input type="date" id="data-date_end">
+            </div>
+            <div class="param">
+                <label for="data-geos">geos (optional, list<string>):</label>
+                <input type="text" id="data-geos" placeholder="e.g., Pune Maharashtra,Mumbai Maharashtra">
+            </div>
+            <div class="param">
+                <label for="data-sort">sort (optional, string - field:dir):</label>
+                <input type="text" id="data-sort" placeholder="e.g., compliance_percent:desc" value="compliance_percent:desc">
+            </div>
+            <div class="param">
+                <label for="data-page">page (optional, int):</label>
+                <input type="number" id="data-page" value="1" min="1">
+            </div>
+            <div class="param">
+                <label for="data-limit">limit (optional, int - max records per page):</label>
+                <input type="number" id="data-limit" value="10" min="1">
+                <small style="color: #666; display: block; margin-top: 4px;">Note: Returns actual available records up to this limit, not padded to exact count</small>
+            </div>
+        </div>
+        <button class="try-out-btn" onclick="tryData()">Try It Out</button>
+        <div class="response" id="data-response"></div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8000'; // Change to your deployed URL if needed
+
+        function tryScrape() {
+            const url = document.getElementById('scrape-url').value;
+            const ocr_method = document.getElementById('scrape-ocr_method').value;
+            const responseDiv = document.getElementById('scrape-response');
+            responseDiv.innerHTML = '<div class="loading">Connecting to stream...</div>';
+
+            if ('EventSource' in window) {
+                const source = new EventSource(`${API_BASE}/scrape?url=${encodeURIComponent(url)}&ocr_method=${ocr_method}`);
+                let accumulatedResponse = '';
+
+                source.onmessage = function(event) {
+                    accumulatedResponse += event.data + '\n';
+                    responseDiv.innerHTML = `<pre>${accumulatedResponse}</pre>`;
+                };
+
+                source.onerror = function(error) {
+                    responseDiv.innerHTML += `<div>Error: ${error}</div>`;
+                    source.close();
+                };
+            } else {
+                responseDiv.innerHTML = 'Your browser does not support Server-Sent Events.';
+            }
+        }
+
+        async function tryData() {
+            const responseDiv = document.getElementById('data-response');
+            responseDiv.innerHTML = '<div class="loading">Fetching data...</div>';
+
+            const params = new URLSearchParams();
+            const inputs = {
+                q: document.getElementById('data-q').value,
+                categories: document.getElementById('data-categories').value,
+                brands: document.getElementById('data-brands').value,
+                platforms: document.getElementById('data-platforms').value,
+                statuses: document.getElementById('data-statuses').value,
+                fields: document.getElementById('data-fields').value,
+                compliance_min: document.getElementById('data-compliance_min').value,
+                compliance_max: document.getElementById('data-compliance_max').value,
+                ocr_min: document.getElementById('data-ocr_min').value,
+                violations_min: document.getElementById('data-violations_min').value,
+                violations_max: document.getElementById('data-violations_max').value,
+                date_start: document.getElementById('data-date_start').value,
+                date_end: document.getElementById('data-date_end').value,
+                geos: document.getElementById('data-geos').value,
+                sort: document.getElementById('data-sort').value,
+                page: document.getElementById('data-page').value,
+                limit: document.getElementById('data-limit').value
+            };
+
+            for (const [key, value] of Object.entries(inputs)) {
+                if (value) {
+                    if (['categories', 'brands', 'platforms', 'statuses', 'fields', 'geos'].includes(key)) {
+                        value.split(',').forEach(v => params.append(key + '[]', v.trim())); // Handle lists as query params
+                    } else {
+                        params.append(key, value);
+                    }
+                }
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/api/data?${params.toString()}`);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const data = await response.json();
+                responseDiv.innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+            } catch (error) {
+                responseDiv.innerHTML = `<div>Error: ${error.message}</div>`;
+            }
+        }
+    </script>
+</body>
+</html>
